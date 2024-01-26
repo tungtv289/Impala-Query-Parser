@@ -1,4 +1,4 @@
-# impala_parser
+# Impala query parser
 Welcome to the code example for the Impala Query Parser project. This project focuses on creating a parser for Impala queries to enable efficient processing and analysis of SQL queries written for the Apache Impala.
 
 
