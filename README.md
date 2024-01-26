@@ -11,5 +11,5 @@ Usage: Provide clear instructions on how to integrate the parser into existing p
 Examples: Include sample code snippets or example queries to demonstrate the usage of the parser and showcase its capabilities.
 
 ```shell
-java -cp ./target/impala_parser.jar:./clouldera_lib/*:./impala_lib/* dev.tungtv.ImpalaParser
+java -cp ./target/impala_parser.jar:./clouldera_lib/*:./impala_lib/* dev.impala.Example
 ```
