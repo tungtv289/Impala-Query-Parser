@@ -1,0 +1,62 @@
+create table das_report.ingest_kpi_xlhh_lego_bag_pkgs_imex stored as parquet as
+select t.station_id,
+       t.id,
+       t.type,        t.created,
+       t.bag_order,
+       t.package_order,
+       t.weight,
+       if(bbs.pkg_order is not null,1,0) is_bbs,
+       t.scan_bag_session_id
+from (
+select ht.station_id,
+       ht.id,
+       ht.type,        ht.created,
+       ht.scan_bag_session_id,
+       htb.bag_order,
+       bp.package_order,
+       bp.weight
+from ghtk.his_trucks ht
+inner join ghtk.his_truck_bags htb
+    on ht.id = htb.his_truck_id
+    and htb.data_date_key >= 20230411
+inner join das_report.tmp_kpi_xlhh_lego_bags_packages_tmp bp
+    on htb.bag_order = bp.bag_order
+    and (delete_time > ht.created or delete_time is null)
+where ht.data_date_key >= 20230411
+) t
+left join ghtk.bigsize_packages bbs
+    on bbs.pkg_order = t.package_order
+union
+select t.station_id,
+       t.id,
+       t.type,
+       t.created,
+       t.bag_order,
+       t.package_order,
+       t.weight,
+       if(bbs.pkg_order is not null,1,0) is_bbs,
+       null as scan_bag_session_id
+from (
+select p.station_id,
+       p.ss_cod_id id,
+       'Dteam' as type,
+       p.exp_time created,
+       p.parcel bag_order,
+       bp.package_order,
+       bp.weight
+from (select station_id, ss_cod_id, exp_time, parcel from ghtk.parcel_sessions
+      where created >= '2023-04-11'
+      union
+      select station_id, ss_cod_id, exp_time, bag_order from ghtk.on_route_bags
+      where created >= '2023-04-11')p
+inner join das_report.tmp_kpi_xlhh_lego_bags_packages_tmp bp
+    on p.parcel = bp.bag_order
+    and (delete_time > p.exp_time or delete_time is null)
+left join ghtk.his_truck_users htu
+    on p.ss_cod_id = htu.session_id
+    and cast(from_timestamp(p.exp_time,'yyyyMMdd') as int) >= 20230411
+) t
+left join ghtk.bigsize_packages bbs
+    on bbs.pkg_order = t.package_order
+    and bbs.created >= '2023-03-19'
+-- schedule report_id = 971
