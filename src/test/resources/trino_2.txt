@@ -1,0 +1,207 @@
+with
+    raw_pl as (
+        select
+            pkg_order,
+            array_sort(
+                array_agg(
+                    cast(
+                        row(
+                            action,
+                            created,
+                            new_value,
+                            created_username,
+                            try_cast(created_user_id as int),
+                            if(
+                                action in (
+                                    'delayDeliverPackageReason',
+                                    'confirmPickedPackageStatusByOperator',
+                                    'confirmTmpPickedPackageStatus',
+                                    'confirmTmpPickedPackageStatusFromPO',
+                                    'confirmPackageHandover',
+                                    'cfmImpPkgFrPONew',
+                                    'cfmImportV4'
+                                ),
+                                desc,
+                                null
+                            )
+                        ) as row(
+                            "action" varchar,
+                            created timestamp,
+                            new_value varchar,
+                            created_username varchar,
+                            created_user_id int,
+                            desc varchar
+                        )
+                    )
+                ),
+                (x, y) -> if(x.created < y.created, 1, if(x.created = y.created, 0, -1))
+            )
+            pl_data_arr
+        from hive.transformation_prod.source_ssk_ghtk_package_logs
+        where
+            "action" in (
+                'updateTmpPickingStatus',
+                'confirmPickedPackageStatusByOperator',
+                'confirmTmpPickedPackageStatus',
+                'confirmTmpPickedPackageStatusFromPO',
+                'confirmPackageHandover',
+                'cfmImpPkgFrPONew',
+                'cfmImportV4',
+                'delayDeliverPackageReason',
+                'cbsop',
+                'cdbsod',
+                'shopCancelByAPI',
+                'shopCanceledPackage',
+                'confirmTmpPickedPackageStatus',
+                'confirmTmpPickedPackageStatusFromPO',
+                'confirmPackageHandover',
+                'cfmImpPkgFrPONew',
+                'confirmPickedPackageStatusByOperator',
+                'cfmImportV4',
+                'cfmImportV4JobQ',
+                'cfmTransit',
+                'cfmTransitD4h',
+                'cbsop',
+                'cdbsod',
+                'shopCancelByAPI',
+                'shopCanceledPackage',
+                'changePackageStatus',
+                'feedbackCancelPackage'
+            )
+            and data_date_key >= cast(date_format(date_add('month', -6, now()), '%Y%m%d') as int)
+
+        group by pkg_order
+    ),
+    step_1 as (
+        select
+            pkg_order,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> x.action = 'updateTmpPickingStatus' and x.new_value in ('1', '4')
+                ),
+                1
+            ).created as time_lay_tc,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> x.action = 'updateTmpPickingStatus' and x.new_value in ('1', '4')
+                ),
+                1
+            ).created_username as user_ltc,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> x.action = 'updateTmpPickingStatus' and x.new_value in ('1', '4')
+                ),
+                1
+            ).created_user_id as created_user_id_user_ltc,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    pl -> (pl.action in ('confirmTmpPickedPackageStatus') and pl.new_value = '3')
+                    or (
+                        pl.action in ('confirmTmpPickedPackageStatusFromPO')
+                        and pl."desc" like '%bưu cục%'
+                    )
+                    or (
+                        pl.action in (
+                            'confirmPackageHandover',
+                            'cfmImpPkgFrPONew',
+                            'confirmPickedPackageStatusByOperator'
+                        )
+                        and pl.new_value = '3'
+                    )
+                    or pl.action in ('cfmImportV4')
+                ),
+                1
+            ) data_at_nk,
+            element_at(
+                filter (pl_data_arr, x -> x.action = 'delayDeliverPackageReason'), 1
+            ).created as time_delay_lay,
+            element_at(
+                filter (pl_data_arr, x -> x.action = 'delayDeliverPackageReason'), 1
+            ).desc as reason_delay,
+            element_at(
+                filter (pl_data_arr, x -> x.action = 'delayDeliverPackageReason'), 1
+            ).new_value as delay_rs,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> x.action in ('cbsop', 'cdbsod', 'shopCancelByAPI', 'shopCanceledPackage')
+                    or (x.action = 'changePackageStatus' and x.new_value = '')
+                ),
+                1
+            ).created as time_shop_huy,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> (x.action in ('confirmTmpPickedPackageStatus') and x.new_value = '3')
+                    or (
+                        x.action in ('confirmTmpPickedPackageStatusFromPO')
+                        and x."desc" like '%bưu cục%'
+                    )
+                    or (
+                        x.action in (
+                            'confirmPackageHandover',
+                            'cfmImpPkgFrPONew',
+                            'confirmPickedPackageStatusByOperator'
+                        )
+                        and x.new_value = '3'
+                    )
+                    or x.action in ('cfmImportV4', 'cfmImportV4JobQ', 'cfmTransit', 'cfmTransitD4h')
+                ),
+                1
+            ).created as time_nk_giao,
+            element_at(
+                filter (
+                    pl_data_arr,
+                    x -> (x.action in ('confirmTmpPickedPackageStatus') and x.new_value = '3')
+                    or (
+                        x.action in ('confirmTmpPickedPackageStatusFromPO')
+                        and x."desc" like '%bưu cục%'
+                    )
+                    or (
+                        x.action in (
+                            'confirmPackageHandover',
+                            'cfmImpPkgFrPONew',
+                            'confirmPickedPackageStatusByOperator'
+                        )
+                        and x.new_value = '3'
+                    )
+                    or x.action in ('cfmImportV4', 'cfmImportV4JobQ', 'cfmTransit', 'cfmTransitD4h')
+                ),
+                1
+            ).created_user_id as user_id_nk,
+            element_at(
+                filter (pl_data_arr, x -> x.action = 'updateTmpPickingStatus'), 1
+            ).created as time_lay_day
+        from raw_pl
+    )
+select
+    step_1.*,
+    data_at_nk.created as time_nk,
+    case
+        when delay_rs = '123'
+        then 'KH hẹn ngày giao'
+        when delay_rs = '122'
+        then 'Không gọi được KH'
+        when delay_rs = '1200'
+        then 'SĐT sai'
+        when delay_rs in ('124', '125')
+        then 'Địa chỉ sai'
+        when delay_rs = '1300'
+        then 'Shop hẹn ngày giao'
+        when delay_rs in ('1213', '1211', '1212')
+        then 'Delay chờ shop kiểm tra lại'
+        when delay_rs in ('120', '126', '1214')
+        then 'Lý do khác'
+    end as pick_delay_reason_type,
+    epo.position_name as vtri_ltc,
+    epo_user_nk.position_name as vtri_nk,
+    data_at_nk.created_username
+from step_1
+left join hive.transformation_prod.stg_ghtk__emp_profiles epr on epr.user_id = created_user_id_user_ltc
+left join hive.transformation_prod.stg_ghtk__emp_positions epo on epo.id = epr.position_job
+left join hive.transformation_prod.stg_ghtk__emp_profiles epr_user_nk on epr_user_nk.user_id = user_id_nk
+left join hive.transformation_prod.stg_ghtk__emp_positions epo_user_nk on epo_user_nk.id = epr_user_nk.position_job

@@ -1,0 +1,26 @@
+create table das_report.hangnt_deliver_bbs stored as parquet as
+
+select  pkg_order,
+        min(time_xuat_giao_lan_dau) time_xuat_giao_lan_dau,
+        max(time_xuat_giao_lan_dau) time_xuat_giao_lan_cuoi,
+        min(if(to_date(time_xuat_giao_lan_dau)='2023-04-17', time_xuat_giao_lan_dau, null))  time_xuat_giao_ngay_n1,
+        min(time_giao_lan_dau) time_giao_lan_dau,
+        max(time_giao_thanh_cong) time_giao_thanh_cong,
+        max(if(rn=1,vi_tri_giao_thanh_cong,null)) vi_tri_giao_thanh_cong,
+        max(if(rn=1,user_giao_hang_thanh_cong,null)) user_giao_hang_thanh_cong
+from (
+    select  pl.pkg_order, action, created, created_username, position_name, new_value, data_date_key,
+            if(action in ( 'exportBigSizePackages', 'distributorCfmDeliver') ,created, null) time_xuat_giao_lan_dau,
+            if(action = 'updateTmpDeliveringStatus',created, null) time_giao_lan_dau,
+            if(action = 'updateTmpDeliveringStatus' and new_value IN ('1','5', '2', '6'), created, null) time_giao_thanh_cong,
+            if(action = 'updateTmpDeliveringStatus' and new_value IN ('1','5', '2', '6'), position_name, null) vi_tri_giao_thanh_cong,
+            if(action = 'updateTmpDeliveringStatus' and new_value IN ('1','5', '2', '6'), created_username, null) user_giao_hang_thanh_cong,
+            row_number() over(partition by pl.pkg_order, action order by created desc) rn
+    from ghtk.package_logs_stable pl
+    inner join (select pkg_order from ghtk.bigsize_packages where created >= '2023-03-19') bp ON bp.pkg_order=pl.pkg_order
+    left join ghtk_datamart.dimcod d on d.username = pl.created_username
+    where data_date_key >= 20230319 and action in ('exportBigSizePackages','updateTmpDeliveringStatus', 'distributorCfmDeliver')
+    ) t
+group by pkg_order
+
+-- schedule report_id = 1258

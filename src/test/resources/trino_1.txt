@@ -1,0 +1,978 @@
+with pl_parse as (SELECT "pkg_order",
+                         "_external_gtid",
+                         "_external_pos",
+                         "_external_row",
+                         "_external_ts_sec",
+                         "pick_date"                   AS "pick_date",
+                         ("pick_ws")                   AS "pick_ws",
+                         ("deliver_date")              AS "deliver_date",
+                         ("deliver_ws")                AS "deliver_ws",
+                         ("first_pick")                AS "first_pick",
+                         ("first_pick_crt_id")         AS "first_pick_crt_id",
+                         ("first_pick_success")        AS "first_pick_success",
+                         ("is_ghtk_delay_pick")        AS "is_ghtk_delay_pick",
+                         ("imp_pick")                  AS "imp_pick",
+                         ("imp_pick_crt_id")           AS "imp_pick_crt_id",
+                         ("imp_pick_po")               AS "imp_pick_po",
+                         ("imp_pick_po_crt_id")        AS "imp_pick_po_crt_id",
+                         ("is_pick_change_status")     AS "is_pick_change_status",
+                         ("first_deliver")             AS "first_deliver",
+                         ("first_deliver_crt_id")      AS "first_deliver_crt_id",
+                         ("first_deliver_success")     AS "first_deliver_success",
+                         ("first_deliver_new_value")   AS "first_deliver_new_value",
+                         ("is_ghtk_delay_deliver")     AS "is_ghtk_delay_deliver",
+                         ("deliver_imp")               AS "deliver_imp",
+                         ("deliver_imp_crt_id")        AS "deliver_imp_crt_id",
+                         ("shop_update_pick_date")     AS "shop_update_pick_date",
+                         ("shop_update_pick_ws")       AS "shop_update_pick_ws",
+                         ("auto_update_deliver_date")  AS "auto_update_deliver_date",
+                         ("auto_update_deliver_ws")    AS "auto_update_deliver_ws",
+                         ("shop_update_deliver_date")  AS "shop_update_deliver_date",
+                         ("shop_update_deliver_ws")    AS "shop_update_deliver_ws",
+                         ("first_deliver_cart")        AS "first_deliver_cart",
+                         ("first_deliver_cart_crt_id") AS "first_deliver_cart_crt_id",
+                         ("first_deliver_cart_val")    AS "first_deliver_cart_val",
+                         CASE
+                             WHEN "change_deliver_cart" > "deliver_imp" THEN NULL
+                             ELSE "change_deliver_cart"
+                             END                       AS "change_deliver_cart",
+                         CASE
+                             WHEN "change_deliver_cart" > "deliver_imp" THEN NULL
+                             ELSE "change_deliver_cart_crt_id"
+                             END                       AS "change_deliver_cart_crt_id",
+                         CASE
+                             WHEN "change_deliver_cart" > "deliver_imp" THEN NULL
+                             ELSE "change_deliver_cart_val"
+                             END                       AS "change_deliver_cart_val",
+                         CASE
+                             WHEN "deliver_last_exp" > "deliver_imp" THEN NULL
+                             ELSE "deliver_last_exp"
+                             END                       AS "deliver_last_exp",
+                         ("dstrb_cfm_deliver")         AS "dstrb_cfm_deliver",
+                         ("dstrb_cfm_deliver_crt_id")  AS "dstrb_cfm_deliver_crt_id",
+                         ("is_deliver_change_status")  AS "is_deliver_change_status",
+                         ("first_return")              AS "first_return",
+                         ("first_return_crt_id")       AS "first_return_crt_id",
+                         ("first_return_success")      AS "first_return_success",
+                         ("is_ghtk_delay_return")      AS "is_ghtk_delay_return",
+                         ("return_imp")                AS "return_imp",
+                         ("return_imp_crt_id")         AS "return_imp_crt_id",
+                         ("cfm_not_delivered")         AS "cfm_not_delivered",
+                         ("cfm_not_delivered_crt_id")  AS "cfm_not_delivered_crt_id",
+                         ("cfm_delivered")             AS "cfm_delivered",
+                         ("cfm_delivered_crt_id")      AS "cfm_delivered_crt_id",
+                         ("dstrb_cfm_return")          AS "dstrb_cfm_return",
+                         ("dstrb_cfm_return_crt_id")   AS "dstrb_cfm_return_crt_id",
+                         ("last_imp")                  AS "last_imp",
+                         ("last_imp_crt_id")           AS "last_imp_crt_id",
+                         ("is_return_cfm_wrong")       AS "is_return_cfm_wrong",
+                         ("first_exp")                 AS "first_exp",
+                         ("first_imp")                 AS "first_imp",
+                         ("deliver_p2b")               AS "deliver_p2b",
+                         CASE
+                             WHEN "return_p2b" < IF(
+                                         "cfm_delivered" < "cfm_not_delivered",
+                                         "cfm_delivered",
+                                         "cfm_not_delivered"
+                                 ) THEN NULL
+                             ELSE "return_p2b"
+                             END                       AS "return_p2b",
+                         CASE
+                             WHEN "trans_return_exp" < IF(
+                                         "cfm_delivered" < "cfm_not_delivered",
+                                         "cfm_delivered",
+                                         "cfm_not_delivered"
+                                 ) THEN NULL
+                             ELSE "trans_return_exp"
+                             END                       AS "trans_return_exp",
+                         CASE
+                             WHEN "trans_return_first_imp" < IF(
+                                         "cfm_delivered" < "cfm_not_delivered",
+                                         "cfm_delivered",
+                                         "cfm_not_delivered"
+                                 ) THEN NULL
+                             ELSE "trans_return_first_imp"
+                             END                       AS "trans_return_first_imp",
+                         ("last_deliver")              AS last_deliver,
+                         ("last_deliver_new_value")    AS last_deliver_new_value,
+                         ("last_deliver_crt_id")       AS last_deliver_crt_id,
+                         ("last_pick")                 AS last_pick,
+                         ("last_return")               AS last_return,
+                         ("first_pick_cart")           AS first_pick_cart,
+                         ("first_pick_cart_crt_id")    AS first_pick_cart_crt_id,
+                         ("first_pick_cart_val")       AS first_pick_cart_val,
+                         ("cancel_order")              AS cancel_order,
+                         ("cancel_order_crt_id")       AS cancel_order_crt_id,
+                         ("cfm_not_picked")            AS cfm_not_picked,
+                         ("shop_cancel")               AS shop_cancel,
+                         ("first_pick_po")             AS first_pick_po,
+                         ("first_pick_po_crt_id")      AS first_pick_po_crt_id,
+                         ("first_pick_po_success")     AS first_pick_po_success,
+                         ("cod_imp_pick")              AS cod_imp_pick,
+                         "last_pick_success_updateTmpPickingStatus",
+                         "last_pick_success_updatePickedByCod",
+                         "last_pick_success_crt_id_updateTmpPickingStatus",
+                         "last_pick_success_crt_id_updatePickedByCod",
+                         "last_deliver_success",
+                         "last_deliver_success_crt_id",
+                         "last_return_success",
+                         "last_return_success_crt_id",
+                         "luu_don_bc",
+                         "luu_don_bc_crt_id",
+                         "max_deliver_delay",
+                         "max_deliver_delay_crt_id",
+                         "max_pick_delay",
+                         "max_pick_delay_crt_id",
+                         "dp_deliver",
+                         "dp_deliver_crt_id",
+                         "dstrb_4h",
+                         "dstrb_4h_crt_id",
+                         "first_putbag",
+                         "first_bag",
+                         "first_putbag_crt_id"
+                  FROM (SELECT pkg_order,
+                               "_external_gtid",
+                               "_external_pos",
+                               "_external_row",
+                               "_external_ts_sec",
+                               CASE
+                                   WHEN ("action" = 'firstPackageWorkshift')
+                                       THEN
+                                       try(CAST(cast(json_extract(new_value, '$.date_to_delay_pick') as varchar) AS TIMESTAMP))
+                                   ELSE NULL END AS pick_date,
+                               CASE
+                                   WHEN ("action" = 'firstPackageWorkshift')
+                                       THEN try(CAST(cast(json_extract(new_value, '$.pick_work_shift') as varchar) AS INT))
+                                   ELSE NULL
+                                   END           AS pick_ws,
+                               CASE
+                                   WHEN ("action" = 'firstPackageWorkshift')
+                                       THEN
+                                       try(CAST(cast(json_extract(new_value, '$.date_to_delay_deliver') as varchar) AS TIMESTAMP))
+                                   ELSE NULL
+                                   END           AS deliver_date,
+                               CASE
+                                   WHEN ("action" = 'firstPackageWorkshift')
+                                       THEN try(CAST(json_extract(new_value, '$.deliver_work_shift') AS INT))
+                                   ELSE NULL
+                                   END           AS deliver_ws,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('updateTmpPickingStatus', 'updatePickedByCod')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS first_pick,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('updateTmpPickingStatus', 'updatePickedByCod')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_pick_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" IN ('updateTmpPickingStatus', 'updatePickedByCod')
+                                           AND "new_value" IN ('1', '4')
+                                       ) THEN TRUE
+                                   WHEN (
+                                       "action" IN ('updateTmpPickingStatus', 'updatePickedByCod')
+                                       ) THEN FALSE
+                                   ELSE NULL
+                                   END           AS first_pick_success,
+                               CASE
+                                   WHEN (
+                                               "action" = 'delayPickPackageReason'
+                                           AND "desc" like '%Xin lỗi vì GHTK%'
+                                       ) THEN TRUE
+                                   WHEN ("action" = 'delayPickPackageReason') THEN FALSE
+                                   ELSE NULL
+                                   END           AS is_ghtk_delay_pick,
+                               CASE
+                                   WHEN (
+                                               "action" IN (
+                                                            'cfmTmpPickedPkgByPKB2C', 'confirmTmpPickedPackageStatus',
+                                                            'confirmPackageHandover'
+                                               )
+                                           AND new_value = '3'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS imp_pick,
+                               CASE
+                                   WHEN (
+                                               "action" IN (
+                                                            'cfmTmpPickedPkgByPKB2C', 'confirmTmpPickedPackageStatus',
+                                                            'confirmPackageHandover'
+                                               )
+                                           AND new_value = '3'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS imp_pick_crt_id,
+                               CASE
+                                   WHEN (
+                                                    "action" = 'confirmTmpPickedPackageStatusFromPO'
+                                                AND new_value = '3'
+                                            )
+                                       OR ("action" = 'cfmImpPkgFrPONew') THEN created
+                                   ELSE NULL
+                                   END           AS imp_pick_po,
+                               CASE
+                                   WHEN (
+                                                    "action" = 'confirmTmpPickedPackageStatusFromPO'
+                                                AND new_value = '3'
+                                            )
+                                       OR ("action" = 'cfmImpPkgFrPONew') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS imp_pick_po_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'changePackageStatus'
+                                           AND "old_value" = '3'
+                                           AND "new_value" IN ('4', '9')
+                                       ) THEN TRUE
+                                   ELSE NULL
+                                   END           AS is_pick_change_status,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN created
+                                   ELSE NULL
+                                   END           AS first_deliver,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_deliver_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpDeliveringStatus'
+                                           AND "new_value" IN ('1', '2', '5', '6')
+                                       ) THEN TRUE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN FALSE
+                                   ELSE NULL
+                                   END           AS first_deliver_success,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN "new_value"
+                                   ELSE NULL
+                                   END           AS first_deliver_new_value,
+                               CASE
+                                   WHEN (
+                                               "action" = 'delayDeliverPackageReason'
+                                           AND "desc" like '%Xin lỗi vì GHTK%'
+                                       ) THEN TRUE
+                                   WHEN ("action" = 'delayDeliverPackageReason') THEN FALSE
+                                   ELSE NULL
+                                   END           AS is_ghtk_delay_deliver,
+                               CASE
+                                   WHEN (
+                                               "action" = 'TransferToDeliverAcceptBill'
+                                           OR "action" = 'TransferToBothAcceptBill'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS deliver_imp,
+                               CASE
+                                   WHEN (
+                                               "action" = 'TransferToDeliverAcceptBill'
+                                           OR "action" = 'TransferToBothAcceptBill'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS deliver_imp_crt_id,
+                               CASE
+                                   WHEN ("action" = 'updatePickWorkShiftPackage') THEN coalesce(
+                                           try(date_parse("new_value", '%Y-%m-%d')),
+                                           try(date_parse("new_value", '%Y-%m-%d %H:%i:%s')),
+                                           try(date_parse("new_value", '%d-%m-%Y')),
+                                           try(date_parse("new_value", '%d/%m/%Y'))
+                                       )
+                                   END           AS shop_update_pick_date,
+                               CASE
+                                   WHEN ("action" = 'updatePickWorkShiftPackage') THEN CASE
+                                       regexp_extract("desc", '^.*Ca (.*)$', 1)
+                                                                                           WHEN 'Sáng' THEN 1
+                                                                                           WHEN 'Chiều' THEN 2
+                                                                                           WHEN 'Tối' THEN 3
+                                                                                           ELSE 0
+                                       END
+                                   ELSE NULL
+                                   END           AS shop_update_pick_ws,
+                               CASE
+                                   WHEN (
+                                               "action" = 'editDateToDelayWhenChangeTransport'
+                                           OR "action" = 'autoReassignDateDeliver'
+                                       ) THEN coalesce(
+                                           try(date_parse("new_value", '%Y-%m-%d')),
+                                           try(date_parse("new_value", '%d/%m/%Y')),
+                                           try(date_parse("new_value", '%Y-%m-%d %H:%i:%s'))
+                                       )
+                                   END           AS auto_update_deliver_date,
+                               CASE
+                                   WHEN (
+                                               "action" = 'editDateToDelayWhenChangeTransport'
+                                           OR "action" = 'autoReassignDateDeliver'
+                                       ) THEN CASE
+                                       regexp_extract("desc", '.*sang (\\D+) .*', 1)
+                                                  WHEN 'Sáng' THEN 1
+                                                  WHEN 'Chiều' THEN 2
+                                                  WHEN 'Tối' THEN 3
+                                                  ELSE 0
+                                       END
+                                   ELSE NULL
+                                   END           AS auto_update_deliver_ws,
+                               CASE
+                                   WHEN ("action" = 'updateDeliverWorkShiftPackage') THEN coalesce(
+                                           try(date_parse("new_value", '%Y-%m-%d')),
+                                           try(date_parse("new_value", '%Y-%m-%d %H:%i:%s'))
+                                       )
+                                   END           AS shop_update_deliver_date,
+                               CASE
+                                   WHEN ("action" = 'updateDeliverWorkShiftPackage') THEN CASE
+                                       regexp_extract("desc", '^.*Ca :(.*)$', 1)
+                                                                                              WHEN 'Sáng' THEN 1
+                                                                                              WHEN 'Chiều' THEN 2
+                                                                                              WHEN 'Tối' THEN 3
+                                                                                              ELSE 0
+                                       END
+                                   ELSE NULL
+                                   END           AS shop_update_deliver_ws,
+                               CASE
+                                   WHEN ("action" = 'autoAssignDeliverCart') THEN created
+                                   ELSE NULL
+                                   END           AS first_deliver_cart,
+                               CASE
+                                   WHEN ("action" = 'autoAssignDeliverCart') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_deliver_cart_crt_id,
+                               CASE
+                                   WHEN ("action" = 'autoAssignDeliverCart') THEN CAST(new_value AS varchar)
+                                   ELSE NULL
+                                   END           AS first_deliver_cart_val,
+                               CASE
+                                   WHEN ("action" = 'autoReassignDeliverCart') THEN created
+                                   ELSE NULL
+                                   END           AS change_deliver_cart,
+                               CASE
+                                   WHEN ("action" = 'autoReassignDeliverCart') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS change_deliver_cart_crt_id,
+                               CASE
+                                   WHEN ("action" = 'autoReassignDeliverCart') THEN CAST(new_value AS varchar)
+                                   ELSE NULL
+                                   END           AS change_deliver_cart_val,
+                               CASE
+                                   WHEN ("action" = 'cfmTransit') THEN created
+                                   ELSE NULL
+                                   END           AS deliver_last_exp,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('distributorCfmDeliver', 'assignDTeam')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS dstrb_cfm_deliver,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('distributorCfmDeliver', 'assignDTeam')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS dstrb_cfm_deliver_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'changePackageStatus'
+                                           AND (
+                                                           "old_value" = '5'
+                                                       OR (
+                                                                       "old_value" = '3'
+                                                                   AND "new_value" = '4'
+                                                               )
+                                                   )
+                                       ) THEN TRUE
+                                   ELSE NULL
+                                   END           AS is_deliver_change_status,
+                               CASE
+                                   WHEN ("action" = 'updateTmpReturningStatus') THEN created
+                                   ELSE NULL
+                                   END           AS first_return,
+                               CASE
+                                   WHEN ("action" = 'updateTmpReturningStatus') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_return_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpReturningStatus'
+                                           AND "new_value" IN ('1', '3')
+                                       ) THEN TRUE
+                                   WHEN ("action" = 'updateTmpReturningStatus') THEN FALSE
+                                   ELSE NULL
+                                   END           AS first_return_success,
+                               CASE
+                                   WHEN (
+                                               "action" = 'delayReturnPackageReason'
+                                           AND "desc" like '%Xin lỗi vì GHTK%'
+                                       ) THEN TRUE
+                                   WHEN ("action" = 'delayReturnPackageReason') THEN FALSE
+                                   ELSE NULL
+                                   END           AS is_ghtk_delay_return,
+                               CASE
+                                   WHEN (
+                                               "action" = 'TransferToBothAcceptBill'
+                                           OR "action" = 'TransferToReturnAcceptBill'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS return_imp,
+                               CASE
+                                   WHEN (
+                                               "action" = 'TransferToBothAcceptBill'
+                                           OR "action" = 'TransferToReturnAcceptBill'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS return_imp_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpDeliveredPackageStatus'
+                                           AND "new_value" = '9'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS cfm_not_delivered,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpDeliveredPackageStatus'
+                                           AND "new_value" = '9'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS cfm_not_delivered_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpDeliveredPackageStatus'
+                                           AND (
+                                                           "new_value" = '5'
+                                                       OR "new_value" = '6'
+                                                   )
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS cfm_delivered,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpDeliveredPackageStatus'
+                                           AND (
+                                                           "new_value" = '5'
+                                                       OR "new_value" = '6'
+                                                   )
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS cfm_delivered_crt_id,
+                               CASE
+                                   WHEN ("action" = 'distributorCfmReturning') THEN created
+                                   ELSE NULL
+                                   END           AS dstrb_cfm_return,
+                               CASE
+                                   WHEN ("action" = 'distributorCfmReturning') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS dstrb_cfm_return_crt_id,
+                               CASE
+                                   WHEN ("action" = 'cfmImportV4') THEN created
+                                   ELSE NULL
+                                   END           AS last_imp,
+                               CASE
+                                   WHEN ("action" = 'cfmImportV4') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_imp_crt_id,
+                               CASE
+                                   WHEN ("action" = 'processReturn') THEN TRUE
+                                   ELSE NULL
+                                   END           AS is_return_cfm_wrong,
+                               CASE
+                                   WHEN ("action" = 'cfmTransit') THEN created
+                                   ELSE NULL
+                                   END           AS first_exp,
+                               CASE
+                                   WHEN ("action" = 'cfmImportV4') THEN created
+                                   ELSE NULL
+                                   END           AS first_imp,
+                               CASE
+                                   WHEN ("action" = 'putPackages2Bag') THEN created
+                                   ELSE NULL
+                                   END           AS deliver_p2b,
+                               CASE
+                                   WHEN ("action" = 'putPackages2Bag') THEN created
+                                   ELSE NULL
+                                   END           AS return_p2b,
+                               CASE
+                                   WHEN ("action" = 'cfmTransit') THEN created
+                                   ELSE NULL
+                                   END           AS trans_return_exp,
+                               CASE
+                                   WHEN ("action" = 'cfmImportV4') THEN created
+                                   ELSE NULL
+                                   END           AS trans_return_first_imp,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN created
+                                   ELSE NULL
+                                   END           AS last_deliver,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN new_value
+                                   ELSE NULL
+                                   END           AS last_deliver_new_value,
+                               CASE
+                                   WHEN ("action" = 'updateTmpDeliveringStatus') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_deliver_crt_id,
+                               CASE
+                                   WHEN ("action" = 'updateTmpPickingStatus') THEN created
+                                   ELSE NULL
+                                   END           AS last_pick,
+                               CASE
+                                   WHEN ("action" = 'updateTmpReturningStatus') THEN created
+                                   ELSE NULL
+                                   END           AS last_return,
+                               CASE
+                                   WHEN ("action" = 'autoAssignPickCart') THEN created
+                                   ELSE NULL
+                                   END           AS first_pick_cart,
+                               CASE
+                                   WHEN ("action" = 'autoAssignPickCart') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_pick_cart_crt_id,
+                               CASE
+                                   WHEN ("action" = 'autoAssignPickCart') THEN new_value
+                                   ELSE NULL
+                                   END           AS first_pick_cart_val,
+                               CASE
+                                   WHEN (
+                                               "action" = 'changePackageStatus'
+                                           AND new_value = '9'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS cancel_order,
+                               CASE
+                                   WHEN (
+                                               "action" = 'changePackageStatus'
+                                           AND new_value = '9'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS cancel_order_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatus'
+                                           AND old_value = '12'
+                                           AND new_value = '7'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS cfm_not_picked,
+                               CASE
+                                   WHEN ("action" = 'shopCancelByAPI') THEN created
+                                   ELSE NULL
+                                   END           AS shop_cancel,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatus'
+                                           AND (
+                                                           "new_value" = '3'
+                                                       OR "new_value" = '8'
+                                                   )
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS first_pick_po,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatus'
+                                           AND (
+                                                           "new_value" = '3'
+                                                       OR "new_value" = '8'
+                                                   )
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_pick_po_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatus'
+                                           AND "new_value" = '3'
+                                       ) THEN TRUE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatus'
+                                           AND "new_value" = '8'
+                                       ) THEN FALSE
+                                   ELSE NULL
+                                   END           AS first_pick_po_success,
+                               CASE
+                                   WHEN ("action" = 'codImport') THEN created
+                                   ELSE NULL
+                                   END           AS cod_imp_pick,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpPickingStatus'
+                                           AND "new_value" IN ('1', '4')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS last_pick_success_updateTmpPickingStatus,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updatePickedByCod'
+                                           AND "new_value" IN ('1', '4')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS last_pick_success_updatePickedByCod,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpPickingStatus'
+                                           AND "new_value" IN ('1', '4')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_pick_success_crt_id_updateTmpPickingStatus,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updatePickedByCod'
+                                           AND "new_value" IN ('1', '4')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_pick_success_crt_id_updatePickedByCod,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpDeliveringStatus'
+                                           AND "new_value" IN ('1', '2', '5', '6')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS last_deliver_success,
+                               CASE
+                                   WHEN (
+                                               "action" = 'updateTmpDeliveringStatus'
+                                           AND "new_value" IN ('1', '2', '5', '6')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_deliver_success_crt_id,
+                               CASE
+                                   WHEN (
+                                           (
+                                                       "action" = 'updateTmpReturningStatus'
+                                                   AND "new_value" IN ('1', '3')
+                                               )
+                                           OR "action" = 'processReturn'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS last_return_success,
+                               CASE
+                                   WHEN (
+                                           (
+                                                       "action" = 'updateTmpReturningStatus'
+                                                   AND "new_value" IN ('1', '3')
+                                               )
+                                           OR "action" = 'processReturn'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS last_return_success_crt_id,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatusFromPO'
+                                           AND "new_value" <> '3'
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS luu_don_bc,
+                               CASE
+                                   WHEN (
+                                               "action" = 'confirmTmpPickedPackageStatusFromPO'
+                                           AND "new_value" <> '3'
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS luu_don_bc_crt_id,
+                               CASE
+                                   WHEN ("action" = 'delayDeliverPackageReason') THEN created
+                                   ELSE NULL
+                                   END           AS max_deliver_delay,
+                               CASE
+                                   WHEN ("action" = 'delayDeliverPackageReason') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS max_deliver_delay_crt_id,
+                               CASE
+                                   WHEN ("action" = 'delayPickPackageReason') THEN created
+                                   ELSE NULL
+                                   END           AS max_pick_delay,
+                               CASE
+                                   WHEN ("action" = 'delayPickPackageReason') THEN created_user_id
+                                   ELSE NULL
+                                   END           AS max_pick_delay_crt_id,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('assignDTeam', 'distributorCfmDeliver')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS dp_deliver,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('assignDTeam', 'distributorCfmDeliver')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS dp_deliver_crt_id,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('assignDTeam', 'takePackagesForPTeam')
+                                       ) THEN created
+                                   ELSE NULL
+                                   END           AS dstrb_4h,
+                               CASE
+                                   WHEN (
+                                       "action" IN ('assignDTeam', 'takePackagesForPTeam')
+                                       ) THEN created_user_id
+                                   ELSE NULL
+                                   END           AS dstrb_4h_crt_id,
+                               CASE
+                                   WHEN "action" = 'putPackages2Bag' THEN created
+                                   ELSE NULL
+                                   END           AS first_putbag,
+                               CASE
+                                   WHEN "action" = 'putPackages2Bag'
+                                       THEN CAST(REGEXP_EXTRACT("desc", '(\\d{9,12})', 1) AS INT)
+                                   ELSE NULL
+                                   END           AS first_bag,
+                               CASE
+                                   WHEN "action" = 'putPackages2Bag' THEN created_user_id
+                                   ELSE NULL
+                                   END           AS first_putbag_crt_id
+                        FROM hive.transformation_prod.source_ssk_ghtk_package_logs_action
+                        where mod(pkg_order, 1000) = 0
+                          and action in ('TransferToBothAcceptBill'
+                            , 'TransferToDeliverAcceptBill'
+                            , 'TransferToReturnAcceptBill'
+                            , 'assignDTeam'
+                            , 'autoAssignDeliverCart'
+                            , 'autoAssignPickCart'
+                            , 'autoReassignDateDeliver'
+                            , 'autoReassignDeliverCart'
+                            , 'cfmImpPkgFrPONew'
+                            , 'cfmImportV4'
+                            , 'cfmTmpPickedPkgByPKB2C'
+                            , 'cfmTransit'
+                            , 'changePackageStatus'
+                            , 'codImport'
+                            , 'confirmPackageHandover'
+                            , 'confirmTmpDeliveredPackageStatus'
+                            , 'confirmTmpPickedPackageStatus'
+                            , 'confirmTmpPickedPackageStatusFromPO'
+                            , 'delayDeliverPackageReason'
+                            , 'delayPickPackageReason'
+                            , 'delayReturnPackageReason'
+                            , 'distributorCfmDeliver'
+                            , 'distributorCfmReturning'
+                            , 'editDateToDelayWhenChangeTransport'
+                            , 'firstPackageWorkshift'
+                            , 'processReturn'
+                            , 'putPackages2Bag'
+                            , 'shopCancelByAPI'
+                            , 'takePackagesForPTeam'
+                            , 'updateDeliverWorkShiftPackage'
+                            , 'updatePickWorkShiftPackage'
+                            , 'updatePickedByCod'
+                            , 'updateTmpDeliveringStatus'
+                            , 'updateTmpPickingStatus'
+                            , 'updateTmpReturningStatus'))),
+                       metrics as (
+select pkg_order,
+       max_by("pick_date",
+              row("_external_ts_sec", _external_gtid, "_external_pos",
+                  "_external_row")) filter(where "pick_date" is not null) AS "pick_date", max_by("pick_ws",
+                                                                                                 row("_external_ts_sec",
+                                                                                                     _external_gtid,
+                                                                                                     "_external_pos",
+                                                                                                     "_external_row")) filter(where "pick_ws" is not null) AS "pick_ws", max_by(
+        "deliver_date", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "deliver_date" is not null) AS "deliver_date", max_by(
+        "deliver_ws", row("_external_ts_sec", _external_gtid, "_external_pos",
+                          "_external_row")) filter(where "deliver_ws" is not null) AS "deliver_ws", max_by("first_pick",
+                                                                                                           row(
+                                                                                                                   "_external_ts_sec",
+                                                                                                                   _external_gtid,
+                                                                                                                   "_external_pos",
+                                                                                                                   "_external_row")) filter(where "first_pick" is not null) AS "first_pick", max_by(
+        "first_pick_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "first_pick_crt_id" is not null) AS "first_pick_crt_id", max_by(
+        "first_pick_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                  "_external_row")) filter(where "first_pick_success" is not null) AS "first_pick_success", max_by(
+        "is_ghtk_delay_pick", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                  "_external_row")) filter(where "is_ghtk_delay_pick" is not null) AS "is_ghtk_delay_pick", max_by(
+        "imp_pick", row("_external_ts_sec", _external_gtid, "_external_pos",
+                        "_external_row")) filter(where "imp_pick" is not null) AS "imp_pick", max_by("imp_pick_crt_id",
+                                                                                                     row(
+                                                                                                             "_external_ts_sec",
+                                                                                                             _external_gtid,
+                                                                                                             "_external_pos",
+                                                                                                             "_external_row")) filter(where "imp_pick_crt_id" is not null) AS "imp_pick_crt_id", max_by(
+        "imp_pick_po", row("_external_ts_sec", _external_gtid, "_external_pos",
+                           "_external_row")) filter(where "imp_pick_po" is not null) AS "imp_pick_po", max_by(
+        "imp_pick_po_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                  "_external_row")) filter(where "imp_pick_po_crt_id" is not null) AS "imp_pick_po_crt_id", max_by(
+        "is_pick_change_status", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "is_pick_change_status" is not null) AS "is_pick_change_status", max_by(
+        "first_deliver", row("_external_ts_sec", _external_gtid, "_external_pos",
+                             "_external_row")) filter(where "first_deliver" is not null) AS "first_deliver", max_by(
+        "first_deliver_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "first_deliver_crt_id" is not null) AS "first_deliver_crt_id", max_by(
+        "first_deliver_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "first_deliver_success" is not null) AS "first_deliver_success", max_by(
+        "first_deliver_new_value", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                       "_external_row")) filter(where "first_deliver_new_value" is not null) AS "first_deliver_new_value", max_by(
+        "is_ghtk_delay_deliver", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "is_ghtk_delay_deliver" is not null) AS "is_ghtk_delay_deliver", max_by(
+        "deliver_imp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                           "_external_row")) filter(where "deliver_imp" is not null) AS "deliver_imp", max_by(
+        "deliver_imp_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                  "_external_row")) filter(where "deliver_imp_crt_id" is not null) AS "deliver_imp_crt_id", max_by(
+        "shop_update_pick_date", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "shop_update_pick_date" is not null) AS "shop_update_pick_date", max_by(
+        "shop_update_pick_ws", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "shop_update_pick_ws" is not null) AS "shop_update_pick_ws", max_by(
+        "auto_update_deliver_date", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "auto_update_deliver_date" is not null) AS "auto_update_deliver_date", max_by(
+        "auto_update_deliver_ws", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "auto_update_deliver_ws" is not null) AS "auto_update_deliver_ws", max_by(
+        "shop_update_deliver_date", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "shop_update_deliver_date" is not null) AS "shop_update_deliver_date", max_by(
+        "shop_update_deliver_ws", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "shop_update_deliver_ws" is not null) AS "shop_update_deliver_ws", max_by(
+        "first_deliver_cart", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                  "_external_row")) filter(where "first_deliver_cart" is not null) AS "first_deliver_cart", max_by(
+        "first_deliver_cart_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                         "_external_row")) filter(where "first_deliver_cart_crt_id" is not null) AS "first_deliver_cart_crt_id", max_by(
+        "first_deliver_cart_val", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "first_deliver_cart_val" is not null) AS "first_deliver_cart_val", max_by(
+        "change_deliver_cart", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "change_deliver_cart" is not null) AS "change_deliver_cart", max_by(
+        "change_deliver_cart_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                          "_external_row")) filter(where "change_deliver_cart_crt_id" is not null) AS "change_deliver_cart_crt_id", max_by(
+        "change_deliver_cart_val", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                       "_external_row")) filter(where "change_deliver_cart_val" is not null) AS "change_deliver_cart_val", max_by(
+        "deliver_last_exp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                "_external_row")) filter(where "deliver_last_exp" is not null) AS "deliver_last_exp", max_by(
+        "dstrb_cfm_deliver", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "dstrb_cfm_deliver" is not null) AS "dstrb_cfm_deliver", max_by(
+        "dstrb_cfm_deliver_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "dstrb_cfm_deliver_crt_id" is not null) AS "dstrb_cfm_deliver_crt_id", max_by(
+        "is_deliver_change_status", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "is_deliver_change_status" is not null) AS "is_deliver_change_status", max_by(
+        "first_return", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "first_return" is not null) AS "first_return", max_by(
+        "first_return_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "first_return_crt_id" is not null) AS "first_return_crt_id", max_by(
+        "first_return_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "first_return_success" is not null) AS "first_return_success", max_by(
+        "is_ghtk_delay_return", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "is_ghtk_delay_return" is not null) AS "is_ghtk_delay_return", max_by(
+        "return_imp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                          "_external_row")) filter(where "return_imp" is not null) AS "return_imp", max_by(
+        "return_imp_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "return_imp_crt_id" is not null) AS "return_imp_crt_id", max_by(
+        "cfm_not_delivered", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "cfm_not_delivered" is not null) AS "cfm_not_delivered", max_by(
+        "cfm_not_delivered_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "cfm_not_delivered_crt_id" is not null) AS "cfm_not_delivered_crt_id", max_by(
+        "cfm_delivered", row("_external_ts_sec", _external_gtid, "_external_pos",
+                             "_external_row")) filter(where "cfm_delivered" is not null) AS "cfm_delivered", max_by(
+        "cfm_delivered_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "cfm_delivered_crt_id" is not null) AS "cfm_delivered_crt_id", max_by(
+        "dstrb_cfm_return", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                "_external_row")) filter(where "dstrb_cfm_return" is not null) AS "dstrb_cfm_return", max_by(
+        "dstrb_cfm_return_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                       "_external_row")) filter(where "dstrb_cfm_return_crt_id" is not null) AS "dstrb_cfm_return_crt_id", max_by(
+        "last_imp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                        "_external_row")) filter(where "last_imp" is not null) AS "last_imp", max_by("last_imp_crt_id",
+                                                                                                     row(
+                                                                                                             "_external_ts_sec",
+                                                                                                             _external_gtid,
+                                                                                                             "_external_pos",
+                                                                                                             "_external_row")) filter(where "last_imp_crt_id" is not null) AS "last_imp_crt_id", max_by(
+        "is_return_cfm_wrong", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "is_return_cfm_wrong" is not null) AS "is_return_cfm_wrong", max_by(
+        "first_exp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                         "_external_row")) filter(where "first_exp" is not null) AS "first_exp", max_by("first_imp",
+                                                                                                        row(
+                                                                                                                "_external_ts_sec",
+                                                                                                                _external_gtid,
+                                                                                                                "_external_pos",
+                                                                                                                "_external_row")) filter(where "first_imp" is not null) AS "first_imp", max_by(
+        "deliver_p2b", row("_external_ts_sec", _external_gtid, "_external_pos",
+                           "_external_row")) filter(where "deliver_p2b" is not null) AS "deliver_p2b", max_by(
+        "return_p2b", row("_external_ts_sec", _external_gtid, "_external_pos",
+                          "_external_row")) filter(where "return_p2b" is not null) AS "return_p2b", max_by(
+        "trans_return_exp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                "_external_row")) filter(where trans_return_exp is not null) AS "trans_return_exp", max_by(
+        "trans_return_first_imp", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "trans_return_first_imp" is not null) AS "trans_return_first_imp", max_by(
+        "last_deliver", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "last_deliver" is not null) AS "last_deliver", max_by(
+        "last_deliver_new_value", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "last_deliver_new_value" is not null) AS "last_deliver_new_value", max_by(
+        "last_deliver_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "last_deliver_crt_id" is not null) AS "last_deliver_crt_id", max_by(
+        "last_pick", row("_external_ts_sec", _external_gtid, "_external_pos",
+                         "_external_row")) filter(where "last_pick" is not null) AS "last_pick", max_by("last_return",
+                                                                                                        row(
+                                                                                                                "_external_ts_sec",
+                                                                                                                _external_gtid,
+                                                                                                                "_external_pos",
+                                                                                                                "_external_row")) filter(where "last_return" is not null) AS "last_return", max_by(
+        "first_pick_cart", row("_external_ts_sec", _external_gtid, "_external_pos",
+                               "_external_row")) filter(where "first_pick_cart" is not null) AS "first_pick_cart", max_by(
+        "first_pick_cart_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                      "_external_row")) filter(where "first_pick_cart_crt_id" is not null) AS "first_pick_cart_crt_id", max_by(
+        "first_pick_cart_val", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "first_pick_cart_val" is not null) AS "first_pick_cart_val", max_by(
+        "cancel_order", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "cancel_order" is not null) AS "cancel_order", max_by(
+        "cancel_order_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "cancel_order_crt_id" is not null) AS "cancel_order_crt_id", max_by(
+        "cfm_not_picked", row("_external_ts_sec", _external_gtid, "_external_pos",
+                              "_external_row")) filter(where "cfm_not_picked" is not null) AS "cfm_not_picked", max_by(
+        "shop_cancel", row("_external_ts_sec", _external_gtid, "_external_pos",
+                           "_external_row")) filter(where "shop_cancel" is not null) AS "shop_cancel", max_by(
+        "first_pick_po", row("_external_ts_sec", _external_gtid, "_external_pos",
+                             "_external_row")) filter(where "first_pick_po" is not null) AS "first_pick_po", max_by(
+        "first_pick_po_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "first_pick_po_crt_id" is not null) AS "first_pick_po_crt_id", max_by(
+        "first_pick_po_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "first_pick_po_success" is not null) AS "first_pick_po_success", max_by(
+        "cod_imp_pick", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "cod_imp_pick" is not null) AS "cod_imp_pick", max_by(
+        "last_pick_success_updateTmpPickingStatus",
+        row("_external_ts_sec", _external_gtid, "_external_pos",
+            "_external_row")) filter(where "last_pick_success_updateTmpPickingStatus" is not null) AS "last_pick_success_updateTmpPickingStatus", max_by(
+        "last_pick_success_updatePickedByCod",
+        row("_external_ts_sec", _external_gtid, "_external_pos",
+            "_external_row")) filter(where "last_pick_success_updatePickedByCod" is not null) AS "last_pick_success_updatePickedByCod", max_by(
+        "last_pick_success_crt_id_updateTmpPickingStatus",
+        row("_external_ts_sec", _external_gtid, "_external_pos",
+            "_external_row")) filter(where "last_pick_success_crt_id_updateTmpPickingStatus" is not null) AS "last_pick_success_crt_id_updateTmpPickingStatus", max_by(
+        "last_pick_success_crt_id_updatePickedByCod",
+        row("_external_ts_sec", _external_gtid, "_external_pos",
+            "_external_row")) filter(where "last_pick_success_crt_id_updatePickedByCod" is not null) AS "last_pick_success_crt_id_updatePickedByCod", max_by(
+        "last_deliver_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                    "_external_row")) filter(where "last_deliver_success" is not null) AS "last_deliver_success", max_by(
+        "last_deliver_success_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                           "_external_row")) filter(where "last_deliver_success_crt_id" is not null) AS "last_deliver_success_crt_id", max_by(
+        "last_return_success", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "last_return_success" is not null) AS "last_return_success", max_by(
+        "last_return_success_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                          "_external_row")) filter(where "last_return_success_crt_id" is not null) AS "last_return_success_crt_id", max_by(
+        "luu_don_bc", row("_external_ts_sec", _external_gtid, "_external_pos",
+                          "_external_row")) filter(where "luu_don_bc" is not null) AS "luu_don_bc", max_by(
+        "luu_don_bc_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "luu_don_bc_crt_id" is not null) AS "luu_don_bc_crt_id", max_by(
+        "max_deliver_delay", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "max_deliver_delay" is not null) AS "max_deliver_delay", max_by(
+        "max_deliver_delay_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                        "_external_row")) filter(where "max_deliver_delay_crt_id" is not null) AS "max_deliver_delay_crt_id", max_by(
+        "max_pick_delay", row("_external_ts_sec", _external_gtid, "_external_pos",
+                              "_external_row")) filter(where "max_pick_delay" is not null) AS "max_pick_delay", max_by(
+        "max_pick_delay_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                     "_external_row")) filter(where "max_pick_delay_crt_id" is not null) AS "max_pick_delay_crt_id", max_by(
+        "dp_deliver", row("_external_ts_sec", _external_gtid, "_external_pos",
+                          "_external_row")) filter(where "dp_deliver" is not null) AS "dp_deliver", max_by(
+        "dp_deliver_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                 "_external_row")) filter(where "dp_deliver_crt_id" is not null) AS "dp_deliver_crt_id", max_by(
+        "dstrb_4h", row("_external_ts_sec", _external_gtid, "_external_pos",
+                        "_external_row")) filter(where "dstrb_4h" is not null) AS "dstrb_4h", max_by("dstrb_4h_crt_id",
+                                                                                                     row(
+                                                                                                             "_external_ts_sec",
+                                                                                                             _external_gtid,
+                                                                                                             "_external_pos",
+                                                                                                             "_external_row")) filter(where "dstrb_4h_crt_id" is not null) AS "dstrb_4h_crt_id", max_by(
+        "first_putbag", row("_external_ts_sec", _external_gtid, "_external_pos",
+                            "_external_row")) filter(where "first_putbag" is not null) AS "first_putbag", max_by(
+        "first_bag", row("_external_ts_sec", _external_gtid, "_external_pos",
+                         "_external_row")) filter(where "first_bag" is not null) AS "first_bag", max_by(
+        "first_putbag_crt_id", row("_external_ts_sec", _external_gtid, "_external_pos",
+                                   "_external_row")) filter(where "first_putbag_crt_id" is not null) AS "first_putbag_crt_id"
+from pl_parse
+group by pkg_order)
+select *
+from metrics

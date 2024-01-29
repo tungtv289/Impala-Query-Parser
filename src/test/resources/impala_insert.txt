@@ -1,0 +1,14 @@
+insert overwrite table ghtk_report.auto_refund_import_fix partition (data_date_key)
+select pl.*
+from ghtk_report.auto_refund_package_logs pl
+left join ghtk.users u on u.id = cast(pl.created_user_id as int)
+where
+    (
+        (action in ('verifySessionBags', 'privateNotePackage') and `desc` regexp 'có hàng')
+        or action in ('TransferToDeliverAcceptBill', 'TransferToReturnAcceptBill', 'TransferToBothAcceptBill')
+    )
+and data_date_key between 20210404 and 20210406
+and (
+    ifnull(virtual_user, 0) = 0 and ifnull(u.station_id, 4558) not in (4558, 4566)
+    or action not in ('TransferToDeliverAcceptBill', 'TransferToReturnAcceptBill', 'TransferToBothAcceptBill')
+)

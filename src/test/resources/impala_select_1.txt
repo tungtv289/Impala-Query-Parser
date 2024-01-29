@@ -1,0 +1,297 @@
+with khoxxx_xxxx AS (
+	select
+		*
+	from
+		(
+			select
+				pa.`order` ma_don,
+				ifnull(s1.id, s.id) as station_id,
+				row_number() over (
+					partition by pa.`order`
+					order by
+						ntsp.created desc
+				) rn
+			from
+				db_test.packagessssss_1111 pa
+				inner join db_test.carts ca on ca.id = pa.deliver_cart_id
+				inner join db_test.stations s on s.id = pa.transfer_station_id
+				left join db_test.new_truck_point_carts ntpc on ca.id = ntpc.cart_id
+				left join db_test.new_truck_stop_points ntsp on ntpc.point_id = ntsp.id
+				and ntsp.type in (1, 2)
+				left join (
+					select
+						id
+					from
+						db_test.stations
+					where
+						type in ('station', 'post_office')
+						and working = 1
+				) s1 on s1.id = ntsp.station_id
+			where
+				pa.created >= (now() - interval 30 days)
+				and ca.is_visible = 1
+				and ca.type = 2
+		) t
+	where
+		rn = 1
+),
+kho_tra AS (
+	select
+		*
+	from
+		(
+			select
+				r.pkg_o ma_don,
+				ifnull(s.id, r.station_id) as station_id,
+				row_number() over (
+					partition by r.pkg_o
+					order by
+						ntsp.created desc
+				) rn
+			from
+				db_test.pkg_returns r
+				inner join db_test.carts ca on ca.id = r.cart_id
+				left join db_test.new_truck_point_carts ntpc on ca.id = ntpc.cart_id
+				left join db_test.new_truck_stop_points ntsp on ntpc.point_id = ntsp.id
+				and ntsp.type in (1, 2)
+				left join (
+					select
+						id
+					from
+						db_test.stations
+					where
+						type in ('station', 'post_office')
+						and working = 1
+				) s on s.id = ntsp.station_id
+			where
+				r.created >= (now() - interval 30 days)
+				and ca.is_visible = 1
+				and ca.type = 3
+		) t
+	where
+		rn = 1
+),
+xuat_xe AS (
+	select
+		pkg_order,
+		max(time_xuat_xe) time_xuat_xe
+	from
+		(
+			select
+				pkg_order,
+				pl.created time_xuat_xe,
+				if(
+					regexp_extract(split_part(`desc`, ') (', 2), '\\\\d+', 0) = '',
+					regexp_extract(split_part(`desc`, '(', 2), '\\\\d+', 0),
+					regexp_extract(split_part(`desc`, ') (', 2), '\\\\d+', 0)
+				) station_id
+			from
+				db_test.package_logs pl
+			where
+				pl.data_date_key >= cast(
+					from_timestamp(now() - interval 30 days, 'yyyyMMdd') as int
+				)
+				and (
+					action in ('cfmTransitD4h', 'cfmTransit')
+					and `desc` like '%để giao cho COD%'
+				)
+		) pl
+		inner join khoxxx_xxxx tt on tt.ma_don = pl.pkg_order
+		and cast(pl.station_id as int) = tt.station_id
+	group by
+		pkg_order
+),
+nhap_dich_nhap_tra as (
+	select
+		pl.pkg_order,
+		min(if(pa.`order` is not null, pl.created, null)) as time_nhap_dich,
+		min(if(r.ma_don is not null, pl.created, null)) time_nhap_tra
+	from
+		(
+			select
+				*,
+				case
+					when pl.action in ('cfmImportV4JobQ', 'cfmImportV4') then regexp_extract(pl.`desc`, '\\\\d+', 0)
+					when action = 'scanBox' then regexp_extract(split_part(pl.`desc`, 'kho ', 2), '\\\\d+', 0)
+				end as station_id
+			from
+				db_test.package_logs pl
+			where
+				data_date_key >= cast(
+					from_timestamp(now() - interval 30 days, 'yyyyMMdd') as int
+				)
+				and pl.action in ('cfmImportV4JobQ', 'cfmImportV4', 'scanBox')
+				and (
+					(
+						pl.action in ('cfmImportV4JobQ', 'cfmImportV4')
+						and pl.`desc` not like '%trung chuyển%'
+					)
+					or (
+						action = 'scanBox'
+						and `desc` like '%nhập%'
+					)
+				)
+		) pl
+		left join (
+			select
+				`order`,
+				created,
+				transfer_station_id
+			from
+				db_test.packagessssss_1111 pa
+			where
+				pa.created >= (now() - interval 30 days)
+		) pa on pa.`order` = pl.pkg_order
+		and cast(station_id as int) = pa.transfer_station_id
+		left join kho_tra r on pl.pkg_order = r.ma_don
+		and cast(pl.station_id as int) = r.station_id
+	where
+		r.ma_don is not null
+		or pa.`order` is not null
+	group by
+		pl.pkg_order
+),
+action as (
+	SELECT
+		pkg_order,
+		min(if(type = 'Xuất giao', created, null)) time_xuat_giao,
+		min(if(type = 'Xuất nguồn', created, null)) tg_xuat_nguon,
+		min(if(type = 'Xuất trả', created, null)) time_xuat_tra,
+		min(if(type = 'Lấy TC', created, null)) AS time_lay_tc
+	from
+		(
+			select
+				pkg_order,
+				created,
+				case
+					WHEN pl.action IN (
+						'distributorCfmDeliver',
+						'AssignDTeam',
+						'updateDeliverCod',
+						'autoAssignDelayPackageDteam'
+					) THEN 'Xuất giao'
+					WHEN pl.action IN ('cfmTransit', 'cfmTransitD4h', 'scanBox') THEN 'Xuất nguồn'
+					WHEN pl.action IN ('distributorCfmReturning', 'processReturn') THEN 'Xuất trả'
+					ELSE 'Lấy TC'
+				END AS type
+			from
+				db_test.package_logs pl
+			where
+				pl.data_date_key >= cast(
+					from_timestamp(now() - interval 30 days, 'yyyyMMdd') as int
+				)
+				and pl.action IN (
+					'confirmTmpPickedPackageStatus',
+					'confirmTmpPickedPackageStatusFromPO',
+					'cfmTmpPickedPkgByPKB2C',
+					'confirmPackageHandover',
+					'cfmImpPkgFrPONew',
+					'confirmPickedPackageStatusByOperator',
+					'updateTmpPickingStatus',
+					'distributorCfmDeliver',
+					'AssignDTeam',
+					'updateDeliverCod',
+					'autoAssignDelayPackageDteam',
+					'cfmTransit',
+					'cfmTransitD4h',
+					'scanBox',
+					'distributorCfmReturning',
+					'processReturn'
+				)
+				and (
+					(
+						pl.action IN ('confirmTmpPickedPackageStatus')
+						AND pl.new_value = '3'
+						AND pl.old_value IN ('8', '7', '1', '10', '12', '2', '3')
+					)
+					OR (
+						pl.action IN ('confirmTmpPickedPackageStatusFromPO')
+						AND pl.`desc` LIKE '%bưu cục%'
+					)
+					OR (
+						pl.action IN (
+							'cfmTmpPickedPkgByPKB2C',
+							'confirmPackageHandover',
+							'cfmImpPkgFrPONew'
+						)
+						AND pl.new_value = '3'
+					)
+					OR pl.action = 'confirmPickedPackageStatusByOperator'
+					OR (
+						action in ('updateTmpPickingStatus')
+						and new_value in ('1', '4')
+					)
+					OR pl.action in (
+						'distributorCfmDeliver',
+						'AssignDTeam',
+						'updateDeliverCod',
+						'autoAssignDelayPackageDteam'
+					)
+					OR (
+						pl.action IN ('cfmTransit', 'cfmTransitD4h')
+						or (
+							pl.action = 'scanBox'
+							and `desc` like '%xuất%'
+						)
+					)
+					OR pl.action in ('distributorCfmReturning', 'processReturn')
+				)
+		) t
+	group by
+		pkg_order
+)
+select
+	pa.`order`,
+	s.id p_station_id,
+	s1.id d_station_id,
+	s3.id r_station_id,
+	CASE
+		WHEN s.province_id = 1
+		AND s.note like '%kho_huyen%' THEN 'Huyện HN'
+		WHEN s.province_id = 1 THEN 'Nội thành HN'
+		WHEN s.province_id = 126
+		AND s.note like '%kho_huyen%' THEN 'Huyện HCM'
+		WHEN s.province_id = 126
+		AND s.type IN ('station', 'post_office') THEN 'Nội thành HCM'
+		else 'Tỉnh'
+	END AS type_kho_nguon,
+	CASE
+		WHEN s1.province_id = 1
+		AND s1.note like '%kho_huyen%' THEN 'Huyện HN'
+		WHEN s1.province_id = 1 THEN 'Nội thành HN'
+		WHEN s1.province_id = 126
+		AND s1.note like '%kho_huyen%' THEN 'Huyện HCM'
+		WHEN s1.province_id = 126
+		AND s1.type IN ('s1tation', 'pos1t_office') THEN 'Nội thành HCM'
+		else 'Tỉnh'
+	END As type_kho_dich,
+	CASE
+		WHEN s3.province_id = 1
+		AND s3.note like '%kho_huyen%' THEN 'Huyện HN'
+		WHEN s3.province_id = 1 THEN 'Nội thành HN'
+		WHEN s3.province_id = 126
+		AND s3.note like '%kho_huyen%' THEN 'Huyện HCM'
+		WHEN s3.province_id = 126
+		AND s3.type IN ('s1tation', 'pos1t_office') THEN 'Nội thành HCM'
+		else 'Tỉnh'
+	END as type_kho_tra,
+	ifnull(time_xuat_xe, time_nhap_dich) xx_nd,
+	time_xuat_giao,
+	tg_xuat_nguon,
+	time_lay_tc,
+	time_nhap_tra,
+	time_xuat_tra
+from
+	db_test.packagessssss_1111 pa
+	INNER JOIN db_test.stations s ON s.id = pa.station_id
+	INNER JOIN db_test.stations s1 ON s1.id = pa.transfer_station_id
+	INNER JOIN db_test.provinces_with_region_name region ON region.id = pa.pick_province_id
+	INNER JOIN db_test.provinces_with_region_name region1 ON region1.id = pa.customer_province_id
+	left join khoxxx_xxxx t on t.ma_don = pa.`order`
+	left join kho_tra r on r.ma_don = pa.`order`
+	left join db_test.stations s3 on r.station_id = s3.id
+	left join xuat_xe xx on xx.pkg_order = pa.`order`
+	left join nhap_dich_nhap_tra nd on nd.pkg_order = pa.`order`
+	left join action a on a.pkg_order = pa.`order`
+where
+	pa.created >= (now() - interval 30 days)
