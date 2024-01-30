@@ -12,8 +12,10 @@ public class ImpalaParserTest {
     @Test
     public void createTableStmt() throws IOException {
         String stmt = Common.getStmtFromFile("impala_create_as_select.txt");
-        Set<TableStatic> actual = impalaParser.parser(stmt);
-        Assert.assertEquals(6, actual.size());
+        String stmt1 = Common.getStmtFromFile("impala_create_as_select_1.txt");
+
+        Assert.assertEquals(6, impalaParser.parser(stmt).size());
+        Assert.assertEquals(4, impalaParser.parser(stmt1).size());
     }
 
     @Test
