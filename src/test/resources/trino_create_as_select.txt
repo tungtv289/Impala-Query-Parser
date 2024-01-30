@@ -1,0 +1,38 @@
+create table das_report.trangntt_bh
+WITH (
+  format = 'PARQUET'
+) AS
+select p.region_name,
+  st3.name kho,
+  i.penalty bh,
+  ipr.pkg_order ma_don,
+  emp1.position_job,
+  ipr.issue_type,
+  u.username,
+  u.fullname,
+  dp.product_name,
+  i.station_id
+from (
+  select *
+  from ghtk.issues_packages_refunds
+  where confirmed_at >= '2023-11-21'
+  and status_id in (4,5)
+) ipr
+inner join (
+  select issue_id, user_id, user_type, station_id, penalty
+  from ghtk.issues_users_refunds
+  where data_date_key >= 20231121
+  and "_external_op" != 'd'
+  and issue_type = 'liable'
+) i on ipr.id = i.issue_id
+inner join (
+  select id, username, fullname from ghtk.users
+) u on u.id = i.user_id
+inner join ghtk.stations st3 on st3.id = i.station_id and (st3.id in (2, 5944, 6, 505, 17801, 1524, 713, 14329, 77, 9461, 5984, 4, 18352) or st3.trf_level = 'kho_tong')
+inner join ghtk.provinces_with_region_name p on st3.province_id = p.id
+left join ghtk.emp_profiles emp1 on i.user_id = emp1.user_id
+left join ghtk.emp_positions emp2 on emp1.position_job = emp2.id
+left join ghtk_datamart.dim_package dp on dp.created >='2023-08-25' and dp.pkg_order = ipr.pkg_order
+left join ghtk.issues_refund_debts rd on rd.pkg_order = ipr.pkg_order
+left join ghtk_report.anhnn93_don_bh_da_chot_cong_no cong_no on cong_no.pkg_order = ipr.pkg_order
+-- schedule report_id = 1548
