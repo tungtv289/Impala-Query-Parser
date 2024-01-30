@@ -38,11 +38,11 @@ public class ImpalaParser {
     }
 
     public TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
-        return new TableStatic(CMD.CREATE_TABLE, node.getTblName().getDb(), node.getTblName().getTbl());
+        return new TableStatic(TableStatic.CMD.CREATE_TABLE, node.getTblName().getDb(), node.getTblName().getTbl());
     }
 
     public TableStatic extractTableNamesFromCreateTableStmt(InsertStmt node) {
-        return new TableStatic(CMD.INSERT_TABLE, node.getTargetTableName().getDb(), node.getTargetTableName().getTbl());
+        return new TableStatic(TableStatic.CMD.INSERT_TABLE, node.getTargetTableName().getDb(), node.getTargetTableName().getTbl());
     }
 
     public List<TableStatic> extractTableNamesFromQueryStmt(QueryStmt node) {
@@ -75,7 +75,7 @@ public class ImpalaParser {
             } else {
                 String dbName = tblRef.getPath().size() > 1 ? tblRef.getPath().get(0) : "";
                 String tblName = tblRef.getPath().size() > 1 ? tblRef.getPath().get(1) : tblRef.getPath().get(0);
-                rs.add(new TableStatic(CMD.SELECT_TABLE, dbName, tblName));
+                rs.add(new TableStatic(TableStatic.CMD.SELECT_TABLE, dbName, tblName));
             }
         }
         if (node.hasWithClause()) {

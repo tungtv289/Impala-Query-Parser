@@ -3,13 +3,13 @@ package dev.tungtv;
 import java.util.Objects;
 
 
-enum CMD {
-    CREATE_TABLE,
-    INSERT_TABLE,
-    SELECT_TABLE
-}
-
 public class TableStatic {
+    public enum CMD {
+        CREATE_TABLE,
+        INSERT_TABLE,
+        SELECT_TABLE
+    }
+
     public CMD cmd;
     public String dbName;
     public String tableName;
