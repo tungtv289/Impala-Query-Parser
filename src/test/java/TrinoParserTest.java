@@ -64,6 +64,19 @@ public class TrinoParserTest {
                 "trangntt_bh")));
     }
 
+    @Test
+    public void insert() throws IOException {
+        TableStatic[] expected = new TableStatic[]{
+                new TableStatic(CMD.INSERT_TABLE, "access_logs", "k8s_to_security_sensitive_delta"),
+                new TableStatic(CMD.SELECT_TABLE, "access_logs", "k8s_prod_cdc"),
+        };
+        String stmt = Common.getStmtFromFile("trino_insert.txt");
+        Set<TableStatic> actual = trinoParser.parser(stmt);
+
+        Assert.assertEquals(2, actual.size());
+        Assert.assertArrayEquals(expected, actual.toArray());
+    }
+
     @Test(expected = ParsingException.class)
     public void test_parsing_exception() throws IOException {
         String stmt = Common.getStmtFromFile("trino_error_syntax.txt");

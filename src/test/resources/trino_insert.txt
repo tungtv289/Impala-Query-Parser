@@ -1,0 +1,36 @@
+INSERT INTO hive.access_logs.k8s_to_security_sensitive_delta 
+    SELECT
+        "_@timestamp" as "timestamp",
+        kubernetes.labels.env AS env,
+        kubernetes.host AS service_host,
+        kubernetes.labels.app AS service_name,
+        COALESCE(JSON_VALUE(message, 'strict $.url' RETURNING VARCHAR), JSON_VALUE(message, 'strict $.uri' RETURNING VARCHAR)) AS url,
+        SPLIT(COALESCE(JSON_VALUE(message, 'strict $.url' RETURNING VARCHAR), JSON_VALUE(message, 'strict $.uri' RETURNING VARCHAR)), '?')[1] AS urp,
+        IF(position('?' IN COALESCE(JSON_VALUE(message, 'strict $.url' RETURNING VARCHAR), JSON_VALUE(message, 'strict $.uri' RETURNING VARCHAR))) > 0,
+           SPLIT(COALESCE(JSON_VALUE(message, 'strict $.url' RETURNING VARCHAR), JSON_VALUE(message, 'strict $.uri' RETURNING VARCHAR)), '?')[2],
+           null) AS urq,
+        JSON_VALUE(message, 'strict $.lt' RETURNING VARCHAR) AS lt,
+        JSON_VALUE(message, 'strict $.rt' RETURNING DOUBLE) AS rt,
+        JSON_VALUE(message, 'strict $.st' RETURNING INTEGER) AS st,
+        JSON_VALUE(message, 'strict $.mt' RETURNING VARCHAR) AS mt,
+        JSON_VALUE(message, 'strict $.rmip' RETURNING VARCHAR) AS rmip,
+        JSON_VALUE(message, 'strict $.cip' RETURNING VARCHAR) AS cip,
+        JSON_VALUE(message, 'strict $.bbs' RETURNING INTEGER) AS bbs,
+        JSON_VALUE(message, 'strict $.cl' RETURNING DOUBLE) AS cl,
+        JSON_VALUE(message, 'strict $.rl' RETURNING DOUBLE) AS rl,
+        JSON_VALUE(message, 'strict $.rf' RETURNING VARCHAR) AS rf,
+        JSON_VALUE(message, 'strict $.ua' RETURNING VARCHAR) AS ua,
+        JSON_VALUE(message, 'strict $.host' RETURNING VARCHAR) AS host,
+        JSON_VALUE(message, 'strict $.sn' RETURNING VARCHAR) AS sn,
+        JSON_VALUE(message, 'strict $.tl' RETURNING VARCHAR) AS tl,
+        JSON_VALUE(message, 'strict $.rid' RETURNING VARCHAR) AS rid,
+        JSON_VALUE(message, 'strict $.rqh' RETURNING INTEGER) AS rqh,
+        JSON_VALUE(message, 'strict $.ex_imb' RETURNING VARCHAR) AS ex_imb,
+        JSON_VALUE(message, 'strict $.ex_at' RETURNING VARCHAR) AS ex_at,
+        JSON_VALUE(message, 'strict $.ex_av' RETURNING VARCHAR) AS ex_av,
+        JSON_VALUE(message, 'strict $.ex_grid' RETURNING VARCHAR) AS ex_grid,
+        JSON_VALUE(message, 'strict $.ex_pos' RETURNING VARCHAR) AS ex_pos
+    FROM access_logs.k8s_prod_cdc
+    WHERE kubernetes.labels.app IN (1,2,3)
+        AND COALESCE(JSON_VALUE(message, 'strict $.url' RETURNING VARCHAR), JSON_VALUE(message, 'strict $.uri' RETURNING VARCHAR)) IS NOT NULL
+        AND data_date_key >= 20240101 AND "_@timestamp" > 20240101 AND "_@timestamp" <= 20240130

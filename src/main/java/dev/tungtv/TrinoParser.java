@@ -22,6 +22,9 @@ public class TrinoParser {
             } else if (stmt instanceof CreateTableAsSelect) {
                 rs.add(extractTableNamesFromCreateTableStmt((CreateTableAsSelect) stmt));
                 rs.addAll(extractTableNamesFromNode(((CreateTableAsSelect) stmt).getQuery()));
+            } else if (stmt instanceof Insert) {
+                rs.add(extractTableNamesFromInsertTableStmt((Insert) stmt));
+                rs.addAll(extractTableNamesFromNode(((Insert) stmt).getQuery()));
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -32,6 +35,10 @@ public class TrinoParser {
 
     public TableStatic extractTableNamesFromCreateTableStmt(CreateTableAsSelect stmt) throws Exception {
         return qualifiedName2TableStatic(TableStatic.CMD.CREATE_TABLE, stmt.getName());
+    }
+
+    public TableStatic extractTableNamesFromInsertTableStmt(Insert stmt) throws Exception {
+        return qualifiedName2TableStatic(TableStatic.CMD.INSERT_TABLE, stmt.getTarget());
     }
 
     public Set<TableStatic> extractTableNamesFromNode(Node stmt) throws Exception {
