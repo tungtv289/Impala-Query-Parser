@@ -13,7 +13,6 @@ import java.util.Set;
 public class ImpalaParser {
     final static Logger logger = Logger.getLogger(ImpalaParser.class);
 
-
     public static Set<TableStatic> parser(String stmt) {
         Set<TableStatic> rs = new LinkedHashSet<>();
         //            List<String> rs = new LinkedList<>();
@@ -23,28 +22,27 @@ public class ImpalaParser {
         try {
             node = (ParseNode) parser.parse().value;
             if (node instanceof QueryStmt) {
-                rs.addAll(ImpalaParser.extractTableNamesFromQueryStmt((QueryStmt) node));
+                rs.addAll(extractTableNamesFromQueryStmt((QueryStmt) node));
             } else if (node instanceof CreateTableAsSelectStmt) {
-                rs.add(ImpalaParser.extractTableNamesFromCreateTableStmt(((CreateTableAsSelectStmt) node).getCreateStmt()));
-                rs.addAll(ImpalaParser.extractTableNamesFromQueryStmt(((CreateTableAsSelectStmt) node).getQueryStmt()));
+                rs.add(extractTableNamesFromCreateTableStmt(((CreateTableAsSelectStmt) node).getCreateStmt()));
+                rs.addAll(extractTableNamesFromQueryStmt(((CreateTableAsSelectStmt) node).getQueryStmt()));
             } else if (node instanceof InsertStmt) {
-                rs.add(ImpalaParser.extractTableNamesFromCreateTableStmt((InsertStmt) node));
-                rs.addAll(ImpalaParser.extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
+                rs.add(extractTableNamesFromCreateTableStmt((InsertStmt) node));
+                rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
             }
         } catch (Exception e) {
-            logger.error(parser.getErrorMsg(stmt));
-            e.printStackTrace();
+            logger.error(parser.getErrorMsg(stmt), e);
         }
         logger.debug(rs);
         return rs;
     }
 
     public static TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
-        return new TableStatic("CreateTableStmt", node.getTblName().getDb(), node.getTblName().getTbl());
+        return new TableStatic(CMD.CREATE_TABLE, node.getTblName().getDb(), node.getTblName().getTbl());
     }
 
     public static TableStatic extractTableNamesFromCreateTableStmt(InsertStmt node) {
-        return new TableStatic("InsertStmt", node.getTargetTableName().getDb(), node.getTargetTableName().getTbl());
+        return new TableStatic(CMD.INSERT_TABLE, node.getTargetTableName().getDb(), node.getTargetTableName().getTbl());
     }
 
     public static List<TableStatic> extractTableNamesFromQueryStmt(QueryStmt node) {
@@ -77,7 +75,7 @@ public class ImpalaParser {
             } else {
                 String dbName = tblRef.getPath().size() > 1 ? tblRef.getPath().get(0) : "";
                 String tblName = tblRef.getPath().size() > 1 ? tblRef.getPath().get(1) : tblRef.getPath().get(0);
-                rs.add(new TableStatic("SelectStmt", dbName, tblName));
+                rs.add(new TableStatic(CMD.SELECT_TABLE, dbName, tblName));
             }
         }
         if (node.hasWithClause()) {

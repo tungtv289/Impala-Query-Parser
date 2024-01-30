@@ -2,12 +2,19 @@ package dev.tungtv;
 
 import java.util.Objects;
 
+
+enum CMD {
+    CREATE_TABLE,
+    INSERT_TABLE,
+    SELECT_TABLE
+}
+
 public class TableStatic {
-    public String cmd;
+    public CMD cmd;
     public String dbName;
     public String tableName;
 
-    public TableStatic(String cmd, String dbName, String tableName) {
+    public TableStatic(CMD cmd, String dbName, String tableName) {
         this.cmd = cmd;
         this.dbName = dbName;
         this.tableName = tableName;
