@@ -13,7 +13,7 @@ import java.util.Set;
 public class ImpalaParser {
     final static Logger logger = Logger.getLogger(ImpalaParser.class);
 
-    public static Set<TableStatic> parser(String stmt) {
+    public Set<TableStatic> parser(String stmt) {
         Set<TableStatic> rs = new LinkedHashSet<>();
         //            List<String> rs = new LinkedList<>();
         SqlScanner input = new SqlScanner(new StringReader(stmt));
@@ -37,15 +37,15 @@ public class ImpalaParser {
         return rs;
     }
 
-    public static TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
+    public TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
         return new TableStatic(CMD.CREATE_TABLE, node.getTblName().getDb(), node.getTblName().getTbl());
     }
 
-    public static TableStatic extractTableNamesFromCreateTableStmt(InsertStmt node) {
+    public TableStatic extractTableNamesFromCreateTableStmt(InsertStmt node) {
         return new TableStatic(CMD.INSERT_TABLE, node.getTargetTableName().getDb(), node.getTargetTableName().getTbl());
     }
 
-    public static List<TableStatic> extractTableNamesFromQueryStmt(QueryStmt node) {
+    public List<TableStatic> extractTableNamesFromQueryStmt(QueryStmt node) {
         List<TableStatic> rs = new ArrayList<>();
         if (node instanceof SelectStmt) {
             rs.addAll(extractTableNamesFromSelectStmt((SelectStmt) node));
@@ -55,7 +55,7 @@ public class ImpalaParser {
         return rs;
     }
 
-    public static List<TableStatic> extractTableNamesFromUnionStmt(UnionStmt node) {
+    public List<TableStatic> extractTableNamesFromUnionStmt(UnionStmt node) {
         List<TableStatic> rs = new ArrayList<>();
         for (UnionStmt.UnionOperand stmt : node.getOperands()) {
             rs.addAll(extractTableNamesFromSelectStmt((SelectStmt) stmt.getQueryStmt()));
@@ -63,7 +63,7 @@ public class ImpalaParser {
         return rs;
     }
 
-    public static List<TableStatic> extractTableNamesFromSelectStmt(SelectStmt node) {
+    public List<TableStatic> extractTableNamesFromSelectStmt(SelectStmt node) {
         List<TableStatic> rs = new ArrayList<>();
         for (TableRef tblRef : node.getTableRefs()) {
             if (tblRef instanceof InlineViewRef) {
