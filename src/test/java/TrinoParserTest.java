@@ -1,6 +1,7 @@
 import dev.tungtv.TableStatic;
 import dev.tungtv.TableStatic.CMD;
 import dev.tungtv.TrinoParser;
+import io.trino.sql.parser.ParsingException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,7 +52,6 @@ public class TrinoParserTest {
 
     }
 
-
     @Test
     public void create_as_select() throws IOException {
         String stmt = Common.getStmtFromFile("trino_create_as_select.txt");
@@ -62,5 +62,11 @@ public class TrinoParserTest {
                 CMD.CREATE_TABLE,
                 "das_report",
                 "trangntt_bh")));
+    }
+
+    @Test(expected = ParsingException.class)
+    public void test_parsing_exception() throws IOException {
+        String stmt = Common.getStmtFromFile("trino_error_syntax.txt");
+        trinoParser.parser(stmt);
     }
 }
