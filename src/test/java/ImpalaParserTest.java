@@ -8,6 +8,7 @@ import java.util.Set;
 
 public class ImpalaParserTest {
     private final ImpalaParser impalaParser = new ImpalaParser();
+
     @Test
     public void createTableStmt() throws IOException {
         String stmt = Common.getStmtFromFile("impala_create_as_select.txt");

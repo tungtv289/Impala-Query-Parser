@@ -55,7 +55,7 @@ public class ImpalaParser {
         return rs;
     }
 
-    public List<TableStatic> extractTableNamesFromUnionStmt(UnionStmt node) {
+    private List<TableStatic> extractTableNamesFromUnionStmt(UnionStmt node) {
         List<TableStatic> rs = new ArrayList<>();
         for (UnionStmt.UnionOperand stmt : node.getOperands()) {
             rs.addAll(extractTableNamesFromSelectStmt((SelectStmt) stmt.getQueryStmt()));
@@ -63,7 +63,7 @@ public class ImpalaParser {
         return rs;
     }
 
-    public List<TableStatic> extractTableNamesFromSelectStmt(SelectStmt node) {
+    private List<TableStatic> extractTableNamesFromSelectStmt(SelectStmt node) {
         List<TableStatic> rs = new ArrayList<>();
         for (TableRef tblRef : node.getTableRefs()) {
             if (tblRef instanceof InlineViewRef) {
