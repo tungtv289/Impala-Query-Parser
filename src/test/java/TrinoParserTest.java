@@ -37,7 +37,7 @@ public class TrinoParserTest {
 
     @Test
     public void select_with_join() throws IOException {
-        TableStatic expected[] = new TableStatic[]{
+        TableStatic[] expected = new TableStatic[]{
                 new TableStatic(CMD.SELECT_TABLE, "transformation_prod", "source_ssk_ghtk_package_logs"),
                 new TableStatic(CMD.SELECT_TABLE, "", "raw_pl"),
                 new TableStatic(CMD.SELECT_TABLE, "", "step_1"),
