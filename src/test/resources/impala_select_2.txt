@@ -1,0 +1,58 @@
+select * from (
+ select `ma_ticket` as 'Mã ticket' ,`ngay_tao_ticket` as 'Ngày tạo ticket' ,`trang_thai_ticket` as 'Trạng thái ticket' ,`ngay_chot_BH` as 'Ngày chốt BH' ,`refund_money` as 'Tiền BH' ,`alias` as 'Mã đơn dài' ,`nhap_nguon` as 'TG nhập kho nguồn' ,`trang_thai_don` as 'Trạng thái đơn' ,`value` as 'Giá trị hàng hóa' ,`pick_money` as 'Tiền thu hộ' ,`insurance` as 'Phí bảo hiểm' ,`kho_nguon` as 'Kho nguồn' ,`kho_dich` as 'Kho đích' ,`trang_thai_tra_hang` as 'Trạng thái trả hàng' ,`kho_hien_tai` as 'Kho hiện tại' ,`tinh_hien_tai` as 'Tỉnh hiện tại' ,`tinh_nguon` as 'Tỉnh nguồn' ,`tinh_dich` as 'Tỉnh đích' ,`thoi_gian_tao_don` as 'Thời gian tạo đơn' ,`thoi_gian_hoan_thanh` as 'Thời gian hoàn thành' ,`thoi_gian_xac_nhan_ticket` as 'Thời gian kế toán xác nhận'  from (
+select ipr.id ma_ticket,
+ipr.created ngay_tao_ticket,
+case
+when ipr.status_id = 1 then 'Đang chờ được xác nhận'
+when ipr.status_id = 2 then 'Tìm thấy hàng'
+when ipr.status_id = 3 then 'Cần chốt bồi hoàn'
+when ipr.status_id = 4 then 'Đã bồi hoàn'
+when ipr.status_id = 5 then 'Kế toán xác nhận' end  trang_thai_ticket,
+ipr.confirmed_at ngay_chot_BH,
+ipr.refund_money,
+rl.created as 'thoi_gian_xac_nhan_ticket',
+pa.alias,
+pa.cur_station_id,
+st2.name as kho_hien_tai,
+t2.name as tinh_hien_tai,
+ps.nhap_nguon,
+pst.name trang_thai_don,
+case when pa.return_status = 0 then 'Chưa trả'
+     when pa.return_status = 1 then 'Đang trả'
+     when pa.return_status = 2 then 'Đã trả'
+     when pa.return_status = 3 then 'Delay trả' else 'Chưa cần xét trả' end trang_thai_tra_hang,
+pa.value, pa.pick_money, pa.insurance,
+st1.name kho_nguon,
+t1.name as tinh_nguon,
+st.name kho_dich,
+t.name as tinh_dich,
+pa.created as thoi_gian_tao_don,
+pa.done_at as thoi_gian_hoan_thanh
+    from (select * from ghtk.issues_packages_refunds 
+    where created between  '2024-01-01 00:00:00'  and '2024-01-30 23:59:59') ipr
+    left join   (select  
+            pkg_order, station_id, imp_pick_crt_id,             took_at nhap_nguon, first_exp xuat_nguon,
+            ifnull(last_pick_success,imp_pick_po) pick_sc,  
+            transfer_station_id, deliver_last_exp             from ghtk.packages_summary
+            where  1 = 1  
+            ) ps on ps.pkg_order = ipr.pkg_order
+    INNER JOIN 
+    (select `order`, created, done_at, transfer_station_id, cur_station_id, station_id, alias, package_status_id, return_status, value, pick_money, insurance from ghtk.package_archives 
+              where  1 = 1  ) pa
+            on pa.`order` = ipr.pkg_order
+    left join ghtk.stations st on st.id = pa.transfer_station_id
+    left join ghtk.stations st2 on st2.id=pa.cur_station_id
+    left join ghtk.stations st1 on st1.id = pa.station_id
+    left join ghtk.provinces_with_region_name as t on t.id= st.province_id
+    left join ghtk.provinces_with_region_name as t1 on t1.id=st1.province_id
+    left join ghtk.provinces_with_region_name as t2 on t2.id=st2.province_id
+    inner join ghtk_view_ba.package_statuses pst on pa.package_status_id=pst.id
+    left join (select issue_id,created from ghtk.issue_refund_logs where action in ('confirmIssueAudit','confirmRefundFinal') 
+    and data_date_key between 20240101
+                                                                             AND 20240130
+    ) as rl on rl.issue_id = ipr.id
+    WHERE ipr.status_id not in (2,5)  or ( ipr.status_id = 5 and   ipr.refund_status != 1 )     and ipr.status_id in (4,5)
+    LIMIT 5000000
+    ) tmp 
+) das limit 100000
+-- basic report_id = 562384 LIMIT 0
