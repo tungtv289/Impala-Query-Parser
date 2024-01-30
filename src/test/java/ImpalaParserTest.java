@@ -10,7 +10,7 @@ public class ImpalaParserTest {
     private final ImpalaParser impalaParser = new ImpalaParser();
 
     @Test
-    public void create() throws IOException {
+    public void create_as_select() throws IOException {
         String stmt = Common.getStmtFromFile("impala_create_as_select.txt");
         String stmt1 = Common.getStmtFromFile("impala_create_as_select_1.txt");
 
@@ -24,7 +24,7 @@ public class ImpalaParserTest {
     }
 
     @Test
-    public void select() throws IOException {
+    public void select_with_join() throws IOException {
         String stmt = Common.getStmtFromFile("impala_select_1.txt");
         Set<TableStatic> actual = impalaParser.parser(stmt);
         Assert.assertEquals(13, actual.size());
