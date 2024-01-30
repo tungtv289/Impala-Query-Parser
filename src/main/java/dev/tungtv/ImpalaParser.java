@@ -1,16 +1,19 @@
 package dev.tungtv;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.impala.analysis.*;
 import org.apache.impala.catalog.View;
+import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ImpalaParser {
+    final static Logger logger = Logger.getLogger(ImpalaParser.class);
+
+
     public static Set<TableStatic> parser(String stmt) {
         Set<TableStatic> rs = new LinkedHashSet<>();
         //            List<String> rs = new LinkedList<>();
@@ -29,9 +32,10 @@ public class ImpalaParser {
                 rs.addAll(ImpalaParser.extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
             }
         } catch (Exception e) {
-            System.err.println(parser.getErrorMsg(stmt));
+            logger.error(parser.getErrorMsg(stmt));
             e.printStackTrace();
         }
+        logger.debug(rs);
         return rs;
     }
 
