@@ -1,0 +1,161 @@
+select * from (
+ SELECT `alias` as 'Mã đơn dài' ,`pick_ward` as 'Phường lấy' ,`pick_work_shift` as 'Ca hẹn lấy' ,`pkg_order` as 'Mã đơn ngắn' ,`pre_paid_ship` as 'Trả trước' ,`ptlh_ban_dau` as 'PTLH ban đầu' ,`return_status` as 'Trạng thái trả' ,`shop_code` as 'Mã shop' ,`shop_ghi_chu` as 'Shop ghi chú' ,`sun_deliver` as 'Giao chủ nhật' ,`sun_pick` as 'Lấy chủ nhật' ,`tao_don` as 'Tạo đơn' ,`htdd` as 'Hình thức đăng đơn' ,`tmp_delivering_status` as 'Trạng thái phụ - giao' ,`tmp_picking_status` as 'Trạng thái phụ - lấy' ,`trang_thai_don` as 'Trạng thái đơn' ,`transport` as 'PTVC' ,`tuyen_giao` as 'Tuyến giao' ,`tuyen_lay` as 'Tuyến lấy' ,`value` as 'Giá trị đơn hàng' ,`weight` as 'Cân nặng' ,`client_id` as 'Mã KH' ,`customer_district` as 'Quận giao' ,`customer_province` as 'Tỉnh giao' ,`customer_ward` as 'Phường giao' ,`date_to_delay_deliver` as 'Ngày hẹn giao' ,`date_to_delay_pick` as 'Ngày hẹn lấy' ,`delay_deliver_reason` as 'Lý do delay giao' ,`deliver_work_shift` as 'Ca hẹn giao' ,`discount` as 'Tiền discount' ,`don_1_phan` as 'Đơn 1 phần' ,`done_at` as 'Thời gian thu tiền' ,`ghi_chu_noi_bo` as 'Ghi chú nội bộ' ,`is_cancel` as 'Đơn hủy' ,`kho_dich` as 'Kho đích' ,`kho_hien_tai` as 'Kho hiện tại' ,`kho_nguon` as 'Kho nguồn' ,`ma_shop_con` as 'Mã shop con' ,`nth_delivered` as 'Số lần giao' ,`nth_picked` as 'Số lần lấy' ,`pick_district` as 'Quận lấy' ,`pick_money` as 'Tiền thu hộ' ,`pick_province` as 'Tỉnh lấy' ,`loai_shop` as 'Loại shop' ,`tg_khong_giao_hang_cuoi` as 'Thời gian không giao được hàng cuối cùng' ,`is_freeship` as 'Người trả phí ship' ,`nth_returned` as 'Số lần trả' ,`delay_return_reason` as 'Lý do delay trả' ,`is_fragile` as 'Đơn dễ vỡ?' ,`is_bigsize` as 'Đơn bigsize?' ,`tg_nhap_dich` as 'TG nhập đích' ,`tg_giao_dau` as 'TG giao đầu' ,`COD_giao` as 'User COD giao' ,`tg_giao_tc` as 'Thời gian giao thành công' ,`ten_sp` as 'Tên sản phẩm' ,`ten_nguoi_nhan` as 'Tên người nhận' 
+FROM
+(
+    SELECT
+        p.alias,
+        p.`order` pkg_order, p.return_part_package as don_1_phan,
+        client_id,
+        from_timestamp(p.created, "yyyy-MM-dd HH:mm:ss") tao_don,
+        ps.name trang_thai_don,
+        shop_code,
+        if(shop_code in ('S14268', 'S6027', 'S349417', 'S628597', 'S661157'), 1, 0) as is_shopee,
+        case 
+          WHEN s.shop_type = 0 THEN 'Standard'
+          WHEN s.shop_type = 1 THEN 'PRO'
+          WHEN s.shop_type = 2 THEN 'Vip'
+          WHEN s.shop_type = 3 THEN 'Prime'
+          WHEN s.shop_type = 4 THEN 'Giao thu moi, mau thu'
+        end as loai_shop ,
+        if(is_freeship = 0, "Khách trả ship", "Shop trả ship") is_freeship,
+        pick_fullname,
+        p.is_cancel,
+        p.transport,
+        round(p.weight, 2) weight,
+        st1.name kho_nguon,
+        st2.name kho_dich,
+        st3.name kho_hien_tai,
+        pick_province,
+        pick_district,
+        pick_ward,
+        customer_province,
+        customer_district,
+        customer_ward,
+        customer_fullname,
+        pre_paid_ship,
+        ship_money,
+        pick_money,
+                discount,
+        value,
+        insurance,
+        c1.alias tuyen_lay,
+        c2.alias tuyen_giao,
+        pick_work_shift,
+        to_date(date_to_delay_pick) date_to_delay_pick,
+        sun_pick,
+        nth_picked,
+        deliver_work_shift,
+        to_date(date_to_delay_deliver) date_to_delay_deliver,
+        sun_deliver,
+        nth_delivered,
+        nth_returned,
+        tg_nhap_dich,
+        tg_giao_dau,
+        from_timestamp(done_at, "yyyy-MM-dd HH:mm:ss") done_at,
+               case
+       WHEN p.source = 1 then 'API'
+       WHEN p.source = 6 then 'MAPP'
+       WHEN p.source = 3 then 'EXC'
+       WHEN p.source = 2 then 'CUS'
+       WHEN p.source = 7 then 'MOSHOP'
+       WHEN p.source = 8 then 'iGhtk'
+       ELSE 'KHÁC'
+       end as htdd,
+        case 
+          when return_status = 0 and package_status_id not in (5,6) then 'Chua tra' 
+          when return_status = 1 then 'Dang tra'
+          when return_status = 2 then 'Da tra'
+          when return_status = 3 then 'Delay tra'
+          when return_status = 4 then 'Luu kho cho check tra'
+          when return_status = 5 then 'Khong tra duoc hang'
+          when return_status  is null  then 'Chua can xet tra'
+        end return_status ,
+        message shop_ghi_chu,
+        private_message ghi_chu_noi_bo,
+        CASE WHEN tmp_picking_status = 0 THEN 'Đang lấy hàng' WHEN tmp_picking_status in (1, 4) THEN 'Đã lấy hàng' WHEN tmp_picking_status in (2, 5) THEN 'Không lấy hàng' WHEN tmp_picking_status in (3, 6) THEN 'Delay lấy hàng' END tmp_picking_status,
+        CASE WHEN tmp_delivering_status = 0 THEN 'Đang giao hàng' WHEN tmp_delivering_status in (1, 5) THEN 'Đã giao toàn bộ hàng' WHEN tmp_delivering_status in (2, 6) THEN 'Đã giao hàng một phần'
+        WHEN tmp_delivering_status in (3, 7) THEN 'Không giao được hàng' WHEN tmp_delivering_status in (4, 8) THEN 'Delay giao hàng' END tmp_delivering_status,
+        case when cast(delay_deliver_reason_code as int) = 120 then 'Xin lỗi vì GHTK không giao kịp'
+        when cast(delay_deliver_reason_code as int) = 121 then 'KH hẹn giao ca tiếp theo'
+        when cast(delay_deliver_reason_code as int) = 122 then 'Không gọi được cho KH'
+        when cast(delay_deliver_reason_code as int) = 123 then 'KH hẹn ngày giao'
+        when cast(delay_deliver_reason_code as int) = 124 then 'KH chuyển địa chỉ mới'
+        when cast(delay_deliver_reason_code as int) = 125 then 'Địa chỉ người nhận sai, cần NCC check lại'
+        when cast(delay_deliver_reason_code as int) = 126 then 'Do điều kiện thời tiết, khách quan'
+        when cast(delay_deliver_reason_code as int) in (127, 1214) then 'Lý do khác'
+        when cast(delay_deliver_reason_code as int) = 128 then 'NCC hẹn lại thời gian giao'
+        when cast(delay_deliver_reason_code as int) = 129 then 'Không tìm thấy hàng'
+        when cast(delay_deliver_reason_code as int) = 1200 then 'SĐT người nhận sai, cần NCC check lại'
+        when cast(delay_deliver_reason_code as int) = 1201 then 'Khách hàng hẹn delay trong ca NOW'
+        when cast(delay_deliver_reason_code as int) = 1300 then 'Shop hẹn ngày giao'
+        when cast(delay_deliver_reason_code as int) = 1400 then 'Khách chọn nhận hàng ở bưu cục'
+        when cast(delay_deliver_reason_code as int) = 1210 then 'Delay chờ shop kiểm tra lại'
+        when cast(delay_deliver_reason_code as int) = 1211 then 'Shop gửi nhầm sản phẩm'
+        when cast(delay_deliver_reason_code as int) = 1212 then 'Sản phẩm bị lỗi'
+        when cast(delay_deliver_reason_code as int) = 1213 then 'KH không được xem sản phẩm'
+        end as delay_deliver_reason,
+        case when cast(delay_return_reason_code as int) = 140 then 'NCC hẹn trả ca sau'
+        when cast(delay_return_reason_code as int) = 141 then 'Không liên lạc được với NCC'
+        when cast(delay_return_reason_code as int) = 142 then 'NCC không có nhà'
+        when cast(delay_return_reason_code as int) = 143 then 'NCC hẹn ngày trả khác'
+        when cast(delay_return_reason_code as int) = 144 then 'Lý do khác'
+        end as delay_return_reason,
+        pick_option ptlh_ban_dau,
+        concat('SE', cast(mp_shop_id as string)) ma_shop_con,
+        audited_at tg_doi_soat,
+        return_fee phi_hoan,
+        tg_khong_giao_hang_cuoi,
+                dp.is_fragile,
+        dp.is_bigsize,
+        dc.username cod_giao, ss.success_cod_deliver_dt tg_giao_tc, dp.product_name ten_sp, p.customer_fullname ten_nguoi_nhan
+    FROM
+    (
+        SELECT 
+        id,
+        `order`, created,alias, return_part_package, shop_code, cur_station_id, client_id, is_freeship,pick_fullname,is_cancel, transport,weight, pick_work_shift,date_to_delay_pick,
+        pick_province,pick_district,pick_ward,customer_province,customer_district,customer_ward,customer_fullname,pre_paid_ship,ship_money,pick_money,value,insurance,sun_deliver,nth_delivered,
+        nth_returned, deliver_cod_id, package_status_id,station_id, transfer_station_id, pick_cart_id, deliver_cart_id, sun_pick, nth_picked, 
+        deliver_work_shift, date_to_delay_deliver, done_at, source, return_status, message, private_message, tmp_picking_status, tmp_delivering_status,
+        delay_deliver_reason_code,delay_return_reason_code, audited_at, return_fee
+        FROM ghtk.package_archives
+        WHERE
+            created between '2023-12-27 00:00:00' and '2024-01-27 23:59:59'
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and package_status_id in (10,4)
+            and  1 = 1 
+            and customer_province_id in (1)
+            and  1 = 1 
+            and  1 = 1 
+            and is_cancel = 0
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            and  1 = 1 
+            AND  1 = 1 
+    ) p
+    left join ghtk_datamart.dimcod dc on dc.cod_id = p.deliver_cod_id
+    INNER JOIN ghtk.package_statuses ps ON ps.id = p.package_status_id
+    INNER JOIN ghtk.stations st1 ON st1.id = p.station_id
+    INNER JOIN ghtk.stations st2 ON st2.id = p.transfer_station_id
+    INNER JOIN ghtk.carts c1 ON c1.id = p.pick_cart_id
+    INNER JOIN ghtk.carts c2 ON c2.id = p.deliver_cart_id
+    INNER JOIN 
+    (
+        SELECT pkg_order, is_fragile, is_bigsize, product_name
+        FROM ghtk_datamart.dim_package
+        WHERE data_date_key between cast(from_timestamp('2023-12-27 00:00:00', 'yyyyMMdd') as int) 
+        and cast(from_timestamp('2024-01-27 23:59:59', 'yyyyMMdd') as int)
+    ) dp on dp.pkg_order = p.`order`
+    LEFT JOIN 
+    (select package_id, pick_option from ghtk.packages_extends 
+    where modified between '2023-12-27 00:00:00' and date_add('2024-01-27 23:59:59',30) 
+    ) pe ON pe.package_id = p.id
+    LEFT JOIN (
+      ...
