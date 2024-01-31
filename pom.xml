@@ -11,6 +11,9 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <spark.version>3.3.0</spark.version>
+        <scala.version>2.12.11</scala.version>
+        <scala.version.major>2.12</scala.version.major>
     </properties>
 
     <repositories>
@@ -20,71 +23,100 @@
         </repository>
     </repositories>
 
-<!--    <dependencies>-->
+    <dependencies>
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-parser</artifactId>
+            <version>422</version>
+            <!--                    <scope>system</scope>-->
+            <!--                    <systemPath>${basedir}/lib/trino_422/trino-parser-422.jar</systemPath>-->
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4</artifactId>
+            <version>4.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+            <version>6.1.1</version>
+        </dependency>
 <!--        <dependency>-->
-<!--            <groupId>org.apache.impala</groupId>-->
-<!--            <artifactId>impala-frontend</artifactId>-->
-<!--            <version>0.1-SNAPSHOT</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/impala-frontend-0.1-SNAPSHOT.jar</systemPath>-->
+<!--            <groupId>org.apache.spark</groupId>-->
+<!--            <artifactId>spark-core_${scala.version.major}</artifactId>-->
+<!--            <version>${spark.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.spark</groupId>-->
+<!--            <artifactId>spark-sql_${scala.version.major}</artifactId>-->
+<!--            <version>${spark.version}</version>-->
 <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.commons</groupId>-->
-<!--            <artifactId>commons-lang3</artifactId>-->
-<!--            <version>3.3</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/commons-lang3-3.3.jar</systemPath>-->
-<!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.impala</groupId>-->
-<!--            <artifactId>java-cup-runtime</artifactId>-->
-<!--            <version>0.11-a-czt01-cdh</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/java-cup-runtime-0.11-a-czt01-cdh.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.impala</groupId>-->
+        <!--            <artifactId>impala-frontend</artifactId>-->
+        <!--            <version>0.1-SNAPSHOT</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/impala-frontend-0.1-SNAPSHOT.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.commons</groupId>-->
-<!--            <artifactId>commons-io</artifactId>-->
-<!--            <version>2.6</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/commons-io-2.6.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.commons</groupId>-->
+        <!--            <artifactId>commons-lang3</artifactId>-->
+        <!--            <version>3.3</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/commons-lang3-3.3.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.commons</groupId>-->
-<!--            <artifactId>commons-io</artifactId>-->
-<!--            <version>2.6</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/commons-io-2.6.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.impala</groupId>-->
+        <!--            <artifactId>java-cup-runtime</artifactId>-->
+        <!--            <version>0.11-a-czt01-cdh</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/java-cup-runtime-0.11-a-czt01-cdh.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>junit</groupId>-->
-<!--            <artifactId>junit</artifactId>-->
-<!--            <version>4.10</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/junit-4.10.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.commons</groupId>-->
+        <!--            <artifactId>commons-io</artifactId>-->
+        <!--            <version>2.6</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/commons-io-2.6.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>com.google.guava</groupId>-->
-<!--            <artifactId>guava</artifactId>-->
-<!--            <version>20.0</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/guava-20.0.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.commons</groupId>-->
+        <!--            <artifactId>commons-io</artifactId>-->
+        <!--            <version>2.6</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/commons-io-2.6.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.thrift</groupId>-->
-<!--            <artifactId>libthrift</artifactId>-->
-<!--            <version>0.9.3</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${basedir}/lib/cdh/libthrift-0.9.3.jar</systemPath>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>junit</groupId>-->
+        <!--            <artifactId>junit</artifactId>-->
+        <!--            <version>4.10</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/junit-4.10.jar</systemPath>-->
+        <!--        </dependency>-->
 
-<!--    </dependencies>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.google.guava</groupId>-->
+        <!--            <artifactId>guava</artifactId>-->
+        <!--            <version>20.0</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/guava-20.0.jar</systemPath>-->
+        <!--        </dependency>-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.thrift</groupId>-->
+        <!--            <artifactId>libthrift</artifactId>-->
+        <!--            <version>0.9.3</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${basedir}/lib/cdh/libthrift-0.9.3.jar</systemPath>-->
+        <!--        </dependency>-->
+
+    </dependencies>
 
 </project>
