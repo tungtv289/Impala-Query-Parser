@@ -26,7 +26,7 @@ public class TableStatic {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TableStatic that = (TableStatic) o;
-        return cmd.equals(that.cmd) && dbName.equals(that.dbName) && tableName.equals(that.tableName);
+        return cmd == that.cmd && Objects.equals(dbName, that.dbName) && Objects.equals(tableName, that.tableName);
     }
 
     @Override
