@@ -1,3 +1,4 @@
+import dev.tungtv.QueryParser;
 import dev.tungtv.TableStatic;
 import dev.tungtv.TableStatic.CMD;
 import dev.tungtv.TrinoParser;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.util.Set;
 
 public class TrinoParserTest {
-    private final TrinoParser trinoParser = new TrinoParser();
+    private final QueryParser trinoParser = new TrinoParser();
 
     @Test
     public void select_simple() throws IOException {
@@ -77,9 +78,12 @@ public class TrinoParserTest {
         Assert.assertArrayEquals(expected, actual.toArray());
     }
 
-    @Test(expected = ParsingException.class)
+    @Test
+//            (expected = ParsingException.class)
     public void test_parsing_exception() throws IOException {
+        TableStatic expected = new TableStatic(TableStatic.CMD.ERROR, null, null);
         String stmt = Common.getStmtFromFile("trino_error_syntax.txt");
-        trinoParser.parser(stmt);
+        Set<TableStatic> actual = trinoParser.parser(stmt);
+        Assert.assertTrue(actual.contains(expected));
     }
 }

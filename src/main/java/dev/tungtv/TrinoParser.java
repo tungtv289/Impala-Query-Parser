@@ -9,27 +9,22 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TrinoParser {
+public class TrinoParser extends QueryParser {
     final static Logger logger = Logger.getLogger(TrinoParser.class);
 
-    public Set<TableStatic> parser(String query) {
+    public Set<TableStatic> implParser(String query) throws Exception {
         Set<TableStatic> rs = new LinkedHashSet<>();
         SqlParser sqlParser = new SqlParser();
         Statement stmt = sqlParser.createStatement(query, new ParsingOptions());
-        try {
-            if (stmt instanceof Query) {
-                rs.addAll(extractTableNamesFromNode(stmt));
-            } else if (stmt instanceof CreateTableAsSelect) {
-                rs.add(extractTableNamesFromCreateTableStmt((CreateTableAsSelect) stmt));
-                rs.addAll(extractTableNamesFromNode(((CreateTableAsSelect) stmt).getQuery()));
-            } else if (stmt instanceof Insert) {
-                rs.add(extractTableNamesFromInsertTableStmt((Insert) stmt));
-                rs.addAll(extractTableNamesFromNode(((Insert) stmt).getQuery()));
-            }
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+        if (stmt instanceof Query) {
+            rs.addAll(extractTableNamesFromNode(stmt));
+        } else if (stmt instanceof CreateTableAsSelect) {
+            rs.add(extractTableNamesFromCreateTableStmt((CreateTableAsSelect) stmt));
+            rs.addAll(extractTableNamesFromNode(((CreateTableAsSelect) stmt).getQuery()));
+        } else if (stmt instanceof Insert) {
+            rs.add(extractTableNamesFromInsertTableStmt((Insert) stmt));
+            rs.addAll(extractTableNamesFromNode(((Insert) stmt).getQuery()));
         }
-        logger.debug(rs);
         return rs;
     }
 

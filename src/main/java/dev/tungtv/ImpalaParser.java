@@ -10,31 +10,25 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ImpalaParser {
+public class ImpalaParser extends QueryParser {
     final static Logger logger = Logger.getLogger(ImpalaParser.class);
 
-    public Set<TableStatic> parser(String stmt) {
+    public Set<TableStatic> implParser(String stmt) throws Exception {
         Set<TableStatic> rs = new LinkedHashSet<>();
         //            List<String> rs = new LinkedList<>();
         SqlScanner input = new SqlScanner(new StringReader(stmt));
         SqlParser parser = new SqlParser(input);
         ParseNode node = null;
-        try {
-            node = (ParseNode) parser.parse().value;
-            if (node instanceof QueryStmt) {
-                rs.addAll(extractTableNamesFromQueryStmt((QueryStmt) node));
-            } else if (node instanceof CreateTableAsSelectStmt) {
-                rs.add(extractTableNamesFromCreateTableStmt(((CreateTableAsSelectStmt) node).getCreateStmt()));
-                rs.addAll(extractTableNamesFromQueryStmt(((CreateTableAsSelectStmt) node).getQueryStmt()));
-            } else if (node instanceof InsertStmt) {
-                rs.add(extractTableNamesFromCreateTableStmt((InsertStmt) node));
-                rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
-            }
-        } catch (Exception e) {
-            logger.error(stmt);
-            rs.add(new TableStatic(TableStatic.CMD.ERROR, null, null));
+        node = (ParseNode) parser.parse().value;
+        if (node instanceof QueryStmt) {
+            rs.addAll(extractTableNamesFromQueryStmt((QueryStmt) node));
+        } else if (node instanceof CreateTableAsSelectStmt) {
+            rs.add(extractTableNamesFromCreateTableStmt(((CreateTableAsSelectStmt) node).getCreateStmt()));
+            rs.addAll(extractTableNamesFromQueryStmt(((CreateTableAsSelectStmt) node).getQueryStmt()));
+        } else if (node instanceof InsertStmt) {
+            rs.add(extractTableNamesFromCreateTableStmt((InsertStmt) node));
+            rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
         }
-        logger.debug(rs);
         return rs;
     }
 

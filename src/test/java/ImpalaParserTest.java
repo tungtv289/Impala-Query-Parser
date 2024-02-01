@@ -1,4 +1,5 @@
 import dev.tungtv.ImpalaParser;
+import dev.tungtv.QueryParser;
 import dev.tungtv.TableStatic;
 import org.junit.Assert;
 import org.junit.Test;
@@ -7,7 +8,7 @@ import java.io.IOException;
 import java.util.Set;
 
 public class ImpalaParserTest {
-    private final ImpalaParser impalaParser = new ImpalaParser();
+    private final QueryParser impalaParser = new ImpalaParser();
 
     @Test
     public void create_as_select() throws IOException {
