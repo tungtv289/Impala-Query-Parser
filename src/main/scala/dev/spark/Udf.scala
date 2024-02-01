@@ -7,21 +7,16 @@ import org.apache.spark.sql.functions.udf
 import java.util
 import scala.collection.JavaConverters.asScalaSetConverter
 
-case class TableStaticScala(cmd: String, dbName: Option[String] = None, tableName: String)
+case class TableStaticScala(cmd: String, dbName: Option[String], tableName: Option[String])
 
 object Udf {
-
   def parser(parser: QueryParser, stmt: String): Option[Set[TableStaticScala]] = {
     if (stmt != null && stmt.nonEmpty) {
       var rs: Set[TableStaticScala] = Set()
       try {
         val actual1: util.Set[TableStatic] = parser.parser(stmt)
         for (tmp: TableStatic <- actual1.asScala.toSet) {
-          var dbName: Option[String] = None
-          if (tmp.dbName.nonEmpty) {
-            dbName = Some(tmp.dbName)
-          }
-          rs = rs + TableStaticScala(tmp.cmd.toString, dbName, tmp.tableName)
+          rs = rs + TableStaticScala(tmp.cmd.toString, Option(tmp.dbName), Option(tmp.tableName))
         }
         Some(rs)
       } catch {
