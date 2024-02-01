@@ -31,7 +31,8 @@ public class ImpalaParser {
                 rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
             }
         } catch (Exception e) {
-            logger.error(parser.getErrorMsg(stmt), e);
+            logger.error(stmt);
+            rs.add(new TableStatic(TableStatic.CMD.ERROR, null, null));
         }
         logger.debug(rs);
         return rs;

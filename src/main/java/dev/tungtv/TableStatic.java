@@ -7,7 +7,8 @@ public class TableStatic {
     public enum CMD {
         CREATE_TABLE,
         INSERT_TABLE,
-        SELECT_TABLE
+        SELECT_TABLE,
+        ERROR
     }
 
     public CMD cmd;
