@@ -1,35 +1,18 @@
+package vn.ghtk.data.governance
+
 import dev.spark.Udf.{extractTableImpala, extractTableTrino}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.junit.{Before, Test}
 
-class SparkUdfTest {
-  private val master = "local[*]"
-  private val appName = "Test UDF"
-
-  private var _spark: SparkSession = _
-
-  def sparkSpec: SparkSession = _spark
-
-  val conf: SparkConf = new SparkConf()
-    .setMaster(master)
-    .setAppName(appName)
-
-  @Before def init(): Unit = {
-    _spark = SparkSession
-      .builder
-      .config(conf)
+object IngestTableStatic {
+  def main(args: Array[String]): Unit = {
+    val sparkConf = new SparkConf()
+    val spark = SparkSession.builder().config(sparkConf)
+      .config("spark.sql.sources.partitionOverwriteMode", "dynamic")
       .getOrCreate()
 
-    _spark.sparkContext.setLogLevel("ERROR")
-
-  }
-
-  @Test def udf_trino_parser(): Unit = {
-    val filePath = Common.getAbsolutePathFromName("trino_audit_log.snappy.parquet")
-    //    val df = _spark.read.parquet(filePath)
-    val df = sparkSpec.read.parquet(filePath)
+    val df = spark.read.parquet("/user/hive/warehouse/ghtk.db/trino_audit_log")
     val rs = df.select("QueryID", "Query", "QueryStartTime")
       .withColumnRenamed("QueryID", "query_id")
       .withColumn("TableStatic", extractTableTrino(col("Query")))
@@ -37,33 +20,32 @@ class SparkUdfTest {
       .withColumn("data_date_key", date_format(to_timestamp(col("QueryStartTime")), "yyyyMMdd").cast("int"))
       .select("query_id", "table_static.*", "data_date_key")
 
-
-
-    //      .show(false)
     //    val dbNull = rs
     //      .where("dbName is null")
-    rs.show(false)
-    df.printSchema()
-  }
+    //    dbNull.show(false)
+    rs.write
+      .format("parquet")
+      .mode("overwrite")
+      .partitionBy("data_date_key")
+      .parquet("/user/hive/warehouse/ghtk.db/table_statistics")
 
-  @Test def udf_impala_parser(): Unit = {
-    val filePath = Common.getAbsolutePathFromName("impala_audit_log.snappy.parquet")
+
     //    val df = _spark.read.parquet(filePath)
     //    val df = sparkSpec.read.format("org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat").load(filePath)
-    val df = sparkSpec.read.parquet(filePath)
-    val rs = df.select("query_id", "statement", "start_time")
+    val df1 = spark.read.parquet("/user/hive/warehouse/ghtk.db/impala_audit_log")
+    val rs1 = df1.select("query_id", "statement", "start_time")
       .withColumnRenamed("query_id", "query_id")
-      .withColumn("statement", regexp_replace(df("statement"), "\\r\\n", " "))
+      .withColumn("statement", regexp_replace(col("statement"), "\\r\\n", " "))
       .withColumn("TableStatic", extractTableImpala(col("statement")))
       .withColumn("table_static", explode(col("TableStatic")))
       .withColumn("data_date_key", date_format(to_timestamp(col("start_time")), "yyyyMMdd").cast("int"))
       .select("query_id", "table_static.*", "data_date_key")
     ////
     ////    //      .show(false)
-//    val dbNull = rs
-//      .where("dbName is not null")
-    rs.show(false)
-    //    rs.show(1, false)
-    df.printSchema()
+    rs1.write
+      .format("parquet")
+      .mode("overwrite")
+      .partitionBy("data_date_key")
+      .parquet("/user/hive/warehouse/ghtk.db/table_statistics")
   }
 }
