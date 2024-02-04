@@ -24,6 +24,8 @@ public class TrinoParser extends QueryParser {
         } else if (stmt instanceof Insert) {
             rs.add(extractTableNamesFromInsertTableStmt((Insert) stmt));
             rs.addAll(extractTableNamesFromNode(((Insert) stmt).getQuery()));
+        } else if (stmt instanceof Prepare) {
+            rs.addAll(extractTableNamesFromNode(((Prepare) stmt).getStatement()));
         }
         return rs;
     }
