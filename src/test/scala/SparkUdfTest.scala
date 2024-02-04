@@ -1,31 +1,8 @@
 import dev.spark.Udf.{extractTableImpala, extractTableTrino}
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.junit.{Before, Test}
+import org.junit.Test
 
-class SparkUdfTest {
-  private val master = "local[*]"
-  private val appName = "Test UDF"
-
-  private var _spark: SparkSession = _
-
-  def sparkSpec: SparkSession = _spark
-
-  val conf: SparkConf = new SparkConf()
-    .setMaster(master)
-    .setAppName(appName)
-
-  @Before def init(): Unit = {
-    _spark = SparkSession
-      .builder
-      .config(conf)
-      .getOrCreate()
-
-    _spark.sparkContext.setLogLevel("ERROR")
-
-  }
-
+class SparkUdfTest extends SparkCommon {
   @Test def udf_trino_parser(): Unit = {
     val filePath = Common.getAbsolutePathFromName("trino_audit_log.snappy.parquet")
     //    val df = _spark.read.parquet(filePath)
@@ -60,8 +37,8 @@ class SparkUdfTest {
       .select("query_id", "table_static.*", "data_date_key")
     ////
     ////    //      .show(false)
-//    val dbNull = rs
-//      .where("dbName is not null")
+    //    val dbNull = rs
+    //      .where("dbName is not null")
     rs.show(false)
     //    rs.show(1, false)
     df.printSchema()
