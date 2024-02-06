@@ -18,7 +18,7 @@ public class ImpalaParserTest {
         Set<TableStatic> rsStmt = impalaParser.parser(stmt);
         Set<TableStatic> rsStmt1 = impalaParser.parser(stmt1);
 
-        Assert.assertEquals(6, rsStmt.size());
+        Assert.assertEquals(8, rsStmt.size());
         Assert.assertEquals(4, rsStmt1.size());
         Assert.assertTrue(rsStmt.contains(new TableStatic(TableStatic.CMD.CREATE_TABLE, "das_report", "ingest_kpi_xlhh_lego_bag_pkgs_imex")));
         Assert.assertTrue(rsStmt1.contains(new TableStatic(TableStatic.CMD.SELECT_TABLE, "ghtk_datamart", "dimcod")));
