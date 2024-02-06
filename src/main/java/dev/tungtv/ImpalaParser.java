@@ -31,12 +31,23 @@ public class ImpalaParser extends QueryParser {
             rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
         } else if(node instanceof ShowStatsStmt) {
             rs.add(extractTableNamesFromShowStatsStmt((ShowStatsStmt) node));
+        } else if(node instanceof ShowCreateTableStmt) {
+            rs.add(extractTableNamesFromShowCreateTableStmt((ShowCreateTableStmt) node));
         }
         return rs;
     }
 
     public TableStatic extractTableNamesFromShowStatsStmt(ShowStatsStmt node) throws IllegalAccessException {
         Object fieldVal = FieldUtils.readField(node, "tableName_", true);
+        return impalaTableName2TableStatic(fieldVal);
+    }
+
+    public TableStatic extractTableNamesFromShowCreateTableStmt(ShowCreateTableStmt node) throws IllegalAccessException {
+        Object fieldVal = FieldUtils.readField(node, "tableName_", true);
+        return impalaTableName2TableStatic(fieldVal);
+    }
+
+    private TableStatic impalaTableName2TableStatic(Object fieldVal) {
         String db = "";
         String tbl = "";
         if (fieldVal instanceof TableName) {

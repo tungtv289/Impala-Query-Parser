@@ -52,7 +52,7 @@ public class ImpalaParserTest {
     }
 
     @Test
-    public void show_range_partitions () throws IOException {
+    public void show_range_partitions() throws IOException {
         String impalaSelect1 = Common.getStmtFromFile("impala_show_range.txt");
         Set<TableStatic> actual1 = impalaParser.parser(impalaSelect1);
 
@@ -60,6 +60,17 @@ public class ImpalaParserTest {
 
         Assert.assertTrue(actual1.contains(new TableStatic(
                 TableStatic.CMD.SELECT_TABLE, "ghtk", "package_archives_latest")));
+    }
+
+    @Test
+    public void show_create_table() throws IOException {
+        String impalaSelect1 = Common.getStmtFromFile("impala_show_create_table.txt");
+        Set<TableStatic> actual1 = impalaParser.parser(impalaSelect1);
+
+        Assert.assertEquals(1, actual1.size());
+
+        Assert.assertTrue(actual1.contains(new TableStatic(
+                TableStatic.CMD.SELECT_TABLE, "ghtk", "package_archives")));
     }
 
     @Test
