@@ -6,6 +6,7 @@ import java.util.Objects;
 public class TableStatic {
     public enum CMD {
         CREATE_TABLE,
+        ALTER_TABLE,
         INSERT_TABLE,
         SELECT_TABLE,
         ERROR

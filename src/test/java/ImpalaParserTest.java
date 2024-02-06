@@ -73,6 +73,18 @@ public class ImpalaParserTest {
                 TableStatic.CMD.SELECT_TABLE, "ghtk", "package_archives")));
     }
 
+
+    @Test
+    public void alter_table() throws IOException {
+        String impalaSelect = Common.getStmtFromFile("impala_alter_table.txt");
+        Set<TableStatic> actual = impalaParser.parser(impalaSelect);
+
+        Assert.assertEquals(1, actual.size());
+
+        Assert.assertTrue(actual.contains(new TableStatic(
+                TableStatic.CMD.ALTER_TABLE, "ghtk", "package_archives_latest")));
+    }
+
     @Test
     public void insert() throws IOException {
         String stmt = Common.getStmtFromFile("impala_insert.txt");

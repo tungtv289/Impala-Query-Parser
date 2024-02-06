@@ -33,28 +33,35 @@ public class ImpalaParser extends QueryParser {
             rs.add(extractTableNamesFromShowStatsStmt((ShowStatsStmt) node));
         } else if(node instanceof ShowCreateTableStmt) {
             rs.add(extractTableNamesFromShowCreateTableStmt((ShowCreateTableStmt) node));
+        } else if(node instanceof AlterTableStmt) {
+            rs.add(extractTableNamesFromAlterTableStmt((AlterTableStmt) node));
         }
         return rs;
     }
 
+    public TableStatic extractTableNamesFromAlterTableStmt(AlterTableStmt node) throws IllegalAccessException {
+        Object fieldVal = FieldUtils.readField(node, "tableName_", true);
+        return impalaTableName2TableStatic(TableStatic.CMD.ALTER_TABLE, fieldVal);
+    }
+
     public TableStatic extractTableNamesFromShowStatsStmt(ShowStatsStmt node) throws IllegalAccessException {
         Object fieldVal = FieldUtils.readField(node, "tableName_", true);
-        return impalaTableName2TableStatic(fieldVal);
+        return impalaTableName2TableStatic(TableStatic.CMD.SELECT_TABLE, fieldVal);
     }
 
     public TableStatic extractTableNamesFromShowCreateTableStmt(ShowCreateTableStmt node) throws IllegalAccessException {
         Object fieldVal = FieldUtils.readField(node, "tableName_", true);
-        return impalaTableName2TableStatic(fieldVal);
+        return impalaTableName2TableStatic(TableStatic.CMD.SELECT_TABLE, fieldVal);
     }
 
-    private TableStatic impalaTableName2TableStatic(Object fieldVal) {
+    private TableStatic impalaTableName2TableStatic(TableStatic.CMD cmd, Object fieldVal) {
         String db = "";
         String tbl = "";
         if (fieldVal instanceof TableName) {
             db = ((TableName) fieldVal).getDb();
             tbl = ((TableName) fieldVal).getTbl();
         }
-        return new TableStatic(TableStatic.CMD.SELECT_TABLE, db, tbl);
+        return new TableStatic(cmd, db, tbl);
     }
 
     public TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
