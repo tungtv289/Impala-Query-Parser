@@ -1,5 +1,6 @@
 package dev.tungtv;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.impala.analysis.*;
 import org.apache.impala.catalog.View;
 import org.apache.log4j.Logger;
@@ -28,8 +29,21 @@ public class ImpalaParser extends QueryParser {
         } else if (node instanceof InsertStmt) {
             rs.add(extractTableNamesFromCreateTableStmt((InsertStmt) node));
             rs.addAll(extractTableNamesFromQueryStmt(((InsertStmt) node).getQueryStmt()));
+        } else if(node instanceof ShowStatsStmt) {
+            rs.add(extractTableNamesFromShowStatsStmt((ShowStatsStmt) node));
         }
         return rs;
+    }
+
+    public TableStatic extractTableNamesFromShowStatsStmt(ShowStatsStmt node) throws IllegalAccessException {
+        Object fieldVal = FieldUtils.readField(node, "tableName_", true);
+        String db = "";
+        String tbl = "";
+        if (fieldVal instanceof TableName) {
+            db = ((TableName) fieldVal).getDb();
+            tbl = ((TableName) fieldVal).getTbl();
+        }
+        return new TableStatic(TableStatic.CMD.SELECT_TABLE, db, tbl);
     }
 
     public TableStatic extractTableNamesFromCreateTableStmt(CreateTableStmt node) {
