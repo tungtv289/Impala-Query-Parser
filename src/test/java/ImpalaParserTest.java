@@ -41,6 +41,17 @@ public class ImpalaParserTest {
     }
 
     @Test
+    public void select_from_union() throws IOException {
+        String impalaSelect1 = Common.getStmtFromFile("impala_select_from_union.txt");
+        Set<TableStatic> actual1 = impalaParser.parser(impalaSelect1);
+
+        Assert.assertEquals(3, actual1.size());
+
+        Assert.assertTrue(actual1.contains(new TableStatic(
+                TableStatic.CMD.SELECT_TABLE, "ghtk", "package_archives")));
+    }
+
+    @Test
     public void insert() throws IOException {
         String stmt = Common.getStmtFromFile("impala_insert.txt");
         Set<TableStatic> actual = impalaParser.parser(stmt);

@@ -1,0 +1,42 @@
+SELECT mien as region
+    , day_1 as '2024-01-03'
+    , day_2 as '2024-01-02'
+    , day_3 as '2024-01-01'
+    , day_4 as '2023-12-31'
+    , day_5 as '2023-12-30'
+    , day_6 as '2023-12-29'
+    , day_7 as '2023-12-28'
+FROM (
+    SELECT 1 as tt, region.region_name as mien
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 01 day, 'yyyyMMdd') as int), `order`, null)) as day_1
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 02 day, 'yyyyMMdd') as int), `order`, null)) as day_2
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 03 day, 'yyyyMMdd') as int), `order`, null)) as day_3
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 04 day, 'yyyyMMdd') as int), `order`, null)) as day_4
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 05 day, 'yyyyMMdd') as int), `order`, null)) as day_5
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 06 day, 'yyyyMMdd') as int), `order`, null)) as day_6
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 07 day, 'yyyyMMdd') as int), `order`, null)) as day_7
+    FROM ghtk.package_archives pa
+    INNER JOIN ghtk.stations s ON s.id = pa.station_id
+    INNER JOIN ghtk.provinces_with_region_name region ON region.id = s.province_id
+    WHERE pa.created BETWEEN '2023-12-28' AND '2024-01-04'
+    AND pa.shop_code = 'S21800040'
+    AND region.region_name in ('HN','HCM')
+    GROUP BY region_name
+    
+    UNION 
+    SELECT 2 as tt, 'Total' as mien
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 01 day, 'yyyyMMdd') as int), `order`, null)) as day_1
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 02 day, 'yyyyMMdd') as int), `order`, null)) as day_2
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 03 day, 'yyyyMMdd') as int), `order`, null)) as day_3
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 04 day, 'yyyyMMdd') as int), `order`, null)) as day_4
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 05 day, 'yyyyMMdd') as int), `order`, null)) as day_5
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 06 day, 'yyyyMMdd') as int), `order`, null)) as day_6
+        , count(if(cast(from_timestamp(pa.created, 'yyyyMMdd') as int) = cast(from_timestamp(now() - interval 07 day, 'yyyyMMdd') as int), `order`, null)) as day_7
+    FROM ghtk.package_archives pa
+    INNER JOIN ghtk.stations s ON s.id = pa.station_id
+    INNER JOIN ghtk.provinces_with_region_name region ON region.id = s.province_id
+    WHERE pa.created BETWEEN '2023-12-28' AND '2024-01-04'
+    AND pa.shop_code = 'S21800040'
+) t 
+ORDER BY tt
+-- sql for pdf subreport id:7390 in report id: 1539

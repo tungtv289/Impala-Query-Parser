@@ -66,6 +66,8 @@ public class ImpalaParser extends QueryParser {
                 QueryStmt viewStmt = inlineViewRef.getViewStmt();
                 if (viewStmt instanceof SelectStmt) {
                     rs.addAll(extractTableNamesFromSelectStmt((SelectStmt) viewStmt));
+                } else if (viewStmt instanceof UnionStmt) {
+                    rs.addAll(extractTableNamesFromUnionStmt((UnionStmt) viewStmt));
                 }
             } else {
                 String dbName = tblRef.getPath().size() > 1 ? tblRef.getPath().get(0) : "";
