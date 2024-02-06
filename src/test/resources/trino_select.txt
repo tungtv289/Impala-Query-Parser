@@ -1,1 +1,4 @@
-select * from dbtest.tblhihi
+PREPARE statement1 FROM select case
+        when max(_external_ts_sec)/pow(10,12) > 1 then 1696981825 - max(_external_ts_sec)/1000
+        else 1696981825 - max(_external_ts_sec)
+        end as delay from kudu.ghtk.issues_packages_refunds where _external_ts_sec < to_unixtime(now())

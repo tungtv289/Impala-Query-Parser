@@ -20,8 +20,8 @@ public class TrinoParserTest {
         Assert.assertEquals(1, actual.size());
         Assert.assertTrue(actual.contains(new TableStatic(
                 CMD.SELECT_TABLE,
-                "dbtest",
-                "tblhihi")));
+                "ghtk",
+                "issues_packages_refunds")));
     }
 
     @Test
